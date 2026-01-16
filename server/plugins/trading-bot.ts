@@ -54,11 +54,11 @@ async function loadData() {
     resetBinanceInstance()
     getBinanceInstance(tradingConfig.isTestnet)
     
-    console.log('✅ 交易数据加载成功', {
-      isTestnet: tradingConfig.isTestnet,
-      isAutoTrading: tradingConfig.isAutoTrading,
-      currentState: tradingStatus.state
-    })
+    // console.log('✅ 交易数据加载成功', {
+    //   isTestnet: tradingConfig.isTestnet,
+    //   isAutoTrading: tradingConfig.isAutoTrading,
+    //   currentState: tradingStatus.state
+    // })
   } catch (error) {
     console.log('未找到数据文件，使用默认配置')
     await initializeData()
@@ -159,7 +159,7 @@ async function tradingLoop() {
       return
     }
     
-    console.log(`[${new Date().toLocaleTimeString()}] 交易状态: ${tradingStatus.state}`)
+    // console.log(`[${new Date().toLocaleTimeString()}] 交易状态: ${tradingStatus.state}`)
     
     // 根据状态执行不同操作
     switch (tradingStatus.state) {

@@ -131,39 +131,39 @@
           </template>
           <el-table :data="store.amplitudeAnalyses" stripe style="width: 100%">
             <el-table-column prop="symbol" label="交易对" width="100" />
-            <el-table-column label="当前价格" width="120">
+            <el-table-column label="当前价格">
               <template #default="{ row }">
                 <span style="font-weight: bold; color: #409eff;">
                   {{ getCurrentPrice(row.symbol) }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column label="振幅" width="90">
+            <el-table-column label="振幅">
               <template #default="{ row }">
                 <el-tag :type="row.amplitude >= store.config.amplitudeThreshold ? 'success' : 'info'" size="small">
                   {{ row.amplitude }}%
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="趋势" width="90">
+            <el-table-column label="趋势">
               <template #default="{ row }">
                 <el-tag :type="row.trend > 0 ? 'success' : row.trend < 0 ? 'danger' : 'info'" size="small">
                   {{ row.trend > 0 ? '+' : '' }}{{ row.trend }}%
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="趋势过滤" width="90">
+            <el-table-column label="趋势过滤">
               <template #default="{ row }">
                 <el-tag :type="row.isTrendFiltered ? 'warning' : 'success'" size="small">
                   {{ row.isTrendFiltered ? '已过滤' : '正常' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="high" label="最高价" width="110" />
-            <el-table-column prop="low" label="最低价" width="110" />
-            <el-table-column prop="buyPrice" label="建议买入价" width="110" />
-            <el-table-column prop="sellPrice" label="建议卖出价" width="110" />
-            <el-table-column label="今日交易" width="90">
+            <el-table-column prop="high" label="最高价" />
+            <el-table-column prop="low" label="最低价" />
+            <el-table-column prop="buyPrice" label="建议买入价" />
+            <el-table-column prop="sellPrice" label="建议卖出价" />
+            <el-table-column label="今日交易">
               <template #default="{ row }">
                 <el-tag :type="(store.stats.tradedSymbols[row.symbol] ?? 0) > 0 ? 'info' : 'success'" size="small">
                   {{ store.stats.tradedSymbols[row.symbol] ?? 0 }}次
@@ -187,31 +187,31 @@
                 {{ row.buyPrice?.toFixed(8) }}
               </template>
             </el-table-column>
-            <el-table-column label="卖出价" width="120">
+            <el-table-column label="卖出价">
               <template #default="{ row }">
                 {{ row.sellPrice?.toFixed(8) || '-' }}
               </template>
             </el-table-column>
-            <el-table-column label="数量" width="100">
+            <el-table-column label="数量">
               <template #default="{ row }">
                 {{ row.amount?.toFixed(8) }}
               </template>
             </el-table-column>
-            <el-table-column label="收益(USDT)" width="120">
+            <el-table-column label="收益(USDT)">
               <template #default="{ row }">
                 <span :class="row.profit >= 0 ? 'text-success' : 'text-danger'">
                   {{ row.profit ? (row.profit >= 0 ? '+' : '') + row.profit.toFixed(2) : '-' }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column label="收益率" width="100">
+            <el-table-column label="收益率">
               <template #default="{ row }">
                 <span :class="row.profitRate >= 0 ? 'text-success' : 'text-danger'">
                   {{ row.profitRate ? (row.profitRate >= 0 ? '+' : '') + row.profitRate.toFixed(2) + '%' : '-' }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="100">
+            <el-table-column label="状态">
               <template #default="{ row }">
                 <el-tag :type="row.status === 'completed' ? 'success' : row.status === 'failed' ? 'danger' : 'warning'">
                   {{ row.status === 'completed' ? '已完成' : row.status === 'failed' ? '失败' : '进行中' }}
