@@ -361,11 +361,12 @@ onMounted(async () => {
   await refreshBalance()
   await refreshAnalysis()
   
-  // 定时刷新数据
+  // 定时刷新数据 - 增加刷新频率
   setInterval(async () => {
     await refreshAnalysis()
     await refreshBalance()
-  }, 60000) // 每分钟刷新一次
+    await store.loadPersistedData() // 同时刷新交易状态和记录
+  }, 10000) // 改为每10秒刷新一次，保持数据实时
 })
 
 // 刷新余额

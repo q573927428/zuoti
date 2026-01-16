@@ -7,6 +7,7 @@ import type {
   SystemStats,
   AmplitudeAnalysis 
 } from '../../types/trading'
+import { getCurrentDate, getDateFromTimestamp } from '../utils/date'
 
 export const useTradingStore = defineStore('trading', {
   state: () => ({
@@ -38,7 +39,7 @@ export const useTradingStore = defineStore('trading', {
       totalProfit: 0,
       totalProfitRate: 0,
       annualizedReturn: 0,
-      currentDate: new Date().toISOString().split('T')[0],
+      currentDate: getCurrentDate(),
       tradedSymbols: {},
     } as SystemStats,
 
@@ -68,9 +69,9 @@ export const useTradingStore = defineStore('trading', {
 
     // 获取今日交易记录
     todayTrades(): TradeRecord[] {
-      const today = new Date().toISOString().split('T')[0]
+      const today = getCurrentDate()
       return this.tradeRecords.filter((record: TradeRecord) => {
-        const recordDate = new Date(record.startTime).toISOString().split('T')[0]
+        const recordDate = getDateFromTimestamp(record.startTime)
         return recordDate === today
       })
     },
@@ -78,9 +79,9 @@ export const useTradingStore = defineStore('trading', {
     // 获取最适合交易的交易对
     bestTradingSymbol(): AmplitudeAnalysis | null {
       // 检查今天是否已经完成过交易
-      const today = new Date().toISOString().split('T')[0]
+      const today = getCurrentDate()
       const todayCompletedTrades = this.tradeRecords.filter((record: TradeRecord) => {
-        const recordDate = new Date(record.startTime).toISOString().split('T')[0]
+        const recordDate = getDateFromTimestamp(record.startTime)
         return recordDate === today && record.status === 'completed'
       })
       
@@ -269,7 +270,7 @@ export const useTradingStore = defineStore('trading', {
 
     // 检查并重置每日数据
     checkAndResetDaily() {
-      const today = new Date().toISOString().split('T')[0] as string
+      const today = getCurrentDate()
       if (this.stats.currentDate !== today) {
         this.stats.currentDate = today
         this.stats.tradedSymbols = {}

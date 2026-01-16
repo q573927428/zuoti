@@ -1,5 +1,6 @@
 import { readFile } from 'fs/promises'
 import { join } from 'path'
+import { getCurrentDate } from '../../utils/date'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -19,7 +20,7 @@ export default defineEventHandler(async (event) => {
           totalProfit: 0,
           totalProfitRate: 0,
           annualizedReturn: 0,
-          currentDate: new Date().toISOString().split('T')[0],
+          currentDate: getCurrentDate(),
           tradedSymbols: {},
         },
         tradingStatus: {

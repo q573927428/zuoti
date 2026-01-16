@@ -3,6 +3,7 @@ import { join } from 'path'
 import type { TradingSymbol, TradingStatus, TradeRecord, SystemConfig, SystemStats } from '../../types/trading'
 import { findBestTradingSymbol, calculateBuyAmount, calculateProfit, checkProtection, checkOrderTimeout } from '../utils/strategy'
 import { createBuyOrder, createSellOrder, fetchOrderStatus, cancelOrder, fetchCurrentPrice, getBinanceInstance, resetBinanceInstance } from '../utils/binance'
+import { getCurrentDate, getDateFromTimestamp } from '../utils/date'
 
 // 全局状态
 let tradingConfig: SystemConfig
@@ -46,7 +47,7 @@ async function loadData() {
       totalProfit: 0,
       totalProfitRate: 0,
       annualizedReturn: 0,
-      currentDate: new Date().toISOString().split('T')[0],
+      currentDate: getCurrentDate(),
       tradedSymbols: {},
     }
     
@@ -93,7 +94,7 @@ async function initializeData() {
     totalProfit: 0,
     totalProfitRate: 0,
     annualizedReturn: 0,
-    currentDate: new Date().toISOString().split('T')[0],
+    currentDate: getCurrentDate(),
     tradedSymbols: {},
   }
   
@@ -122,7 +123,7 @@ async function saveData() {
  * 检查并重置每日数据
  */
 async function checkAndResetDaily() {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getCurrentDate()
   if (stats.currentDate !== today) {
     console.log(`📅 日期变更: ${stats.currentDate} -> ${today}`)
     stats.currentDate = today
@@ -196,9 +197,9 @@ async function tradingLoop() {
 async function handleIdleState() {
   try {
     // 检查今天是否已经完成过交易
-    const today = new Date().toISOString().split('T')[0]
+    const today = getCurrentDate()
     const todayCompletedTrades = tradeRecords.filter(record => {
-      const recordDate = new Date(record.startTime).toISOString().split('T')[0]
+      const recordDate = getDateFromTimestamp(record.startTime)
       return recordDate === today && record.status === 'completed'
     })
     

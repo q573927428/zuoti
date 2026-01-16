@@ -1,44 +1,4 @@
 {
-  "tradeRecords": [
-    {
-      "id": "trade_1768585877117",
-      "symbol": "SOL/USDT",
-      "buyOrderId": "16086346082",
-      "buyPrice": 140.692,
-      "amount": 0.14215449,
-      "startTime": 1768585877117,
-      "status": "in_progress"
-    }
-  ],
-  "stats": {
-    "totalTrades": 1,
-    "successfulTrades": 0,
-    "failedTrades": 0,
-    "totalProfit": 0,
-    "totalProfitRate": 0,
-    "annualizedReturn": 0,
-    "currentDate": "2026-01-16",
-    "tradedSymbols": {
-      "SOL/USDT": 1
-    }
-  },
-  "tradingStatus": {
-    "state": "BUY_ORDER_PLACED",
-    "symbol": "SOL/USDT",
-    "currentTradeId": "trade_1768585877117",
-    "buyOrder": {
-      "orderId": "16086346082",
-      "symbol": "SOL/USDT",
-      "side": "buy",
-      "price": 140.692,
-      "amount": 0.14215449,
-      "status": "open",
-      "createdAt": 1768585877117
-    },
-    "lastUpdateTime": 1768585877117,
-    "high": 143.86,
-    "low": 140.26
-  },
   "config": {
     "isTestnet": false,
     "isAutoTrading": true,
@@ -49,8 +9,48 @@
       "SOL/USDT"
     ],
     "investmentAmount": 20,
-    "amplitudeThreshold": 2,
-    "trendThreshold": 2,
+    "amplitudeThreshold": 2.5,
+    "trendThreshold": 3,
     "orderTimeout": 3600000
+  },
+  "tradingStatus": {
+    "state": "BUY_ORDER_PLACED",
+    "symbol": "SOL/USDT",
+    "currentTradeId": "trade_1768591204558",
+    "buyOrder": {
+      "orderId": "16086815578",
+      "symbol": "SOL/USDT",
+      "side": "buy",
+      "price": 140.7316,
+      "amount": 0.14211449,
+      "status": "open",
+      "createdAt": 1768591204558
+    },
+    "lastUpdateTime": 1768591204558,
+    "high": 144.19,
+    "low": 140.26
+  },
+  "tradeRecords": [
+    {
+      "id": "trade_1768591204558",
+      "symbol": "SOL/USDT",
+      "buyOrderId": "16086815578",
+      "buyPrice": 140.7316,
+      "amount": 0.14211449,
+      "startTime": 1768591204558,
+      "status": "in_progress"
+    }
+  ],
+  "stats": {
+    "totalTrades": 1,
+    "successfulTrades": 0,
+    "failedTrades": 1,
+    "totalProfit": 0,
+    "totalProfitRate": 0,
+    "annualizedReturn": 0,
+    "currentDate": "2026-01-17",
+    "tradedSymbols": {
+      "SOL/USDT": 1
+    }
   }
 }
