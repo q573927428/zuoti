@@ -16,17 +16,25 @@ let isTrading = false
 
 // 数据文件路径
 const DATA_DIR = join(process.cwd(), 'data')
-const DATA_PATH = join(DATA_DIR, 'trading-data.json')
+const CONFIG_PATH = join(DATA_DIR, 'trading-config.json')  // 配置和统计
+const DATA_PATH = join(DATA_DIR, 'trading-data.json')      // 交易记录和状态
 
 /**
  * 加载持久化数据
  */
 async function loadData() {
   try {
-    const data = await readFile(DATA_PATH, 'utf-8')
-    const parsed = JSON.parse(data)
+    // 加载配置和统计数据
+    let configData
+    try {
+      const configFile = await readFile(CONFIG_PATH, 'utf-8')
+      configData = JSON.parse(configFile)
+    } catch (error) {
+      console.log('未找到配置文件，使用默认配置')
+      configData = {}
+    }
     
-    tradingConfig = parsed.config || {
+    tradingConfig = configData.config || {
       isTestnet: false,
       isAutoTrading: false,
       symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT'] as TradingSymbol[],
@@ -36,14 +44,7 @@ async function loadData() {
       orderTimeout: 60 * 60 * 1000,
     }
     
-    tradingStatus = parsed.tradingStatus || {
-      state: 'IDLE',
-      lastUpdateTime: Date.now(),
-    }
-    
-    tradeRecords = parsed.tradeRecords || []
-    
-    stats = parsed.stats || {
+    stats = configData.stats || {
       totalTrades: 0,
       successfulTrades: 0,
       failedTrades: 0,
@@ -53,6 +54,23 @@ async function loadData() {
       currentDate: getCurrentDate(),
       tradedSymbols: {},
     }
+    
+    // 加载交易数据和状态
+    let tradingData
+    try {
+      const dataFile = await readFile(DATA_PATH, 'utf-8')
+      tradingData = JSON.parse(dataFile)
+    } catch (error) {
+      console.log('未找到交易数据文件，初始化空数据')
+      tradingData = {}
+    }
+    
+    tradingStatus = tradingData.tradingStatus || {
+      state: 'IDLE',
+      lastUpdateTime: Date.now(),
+    }
+    
+    tradeRecords = tradingData.tradeRecords || []
     
     // 重置币安实例以应用配置
     resetBinanceInstance()
@@ -64,7 +82,7 @@ async function loadData() {
     //   currentState: tradingStatus.state
     // })
   } catch (error) {
-    console.log('未找到数据文件，使用默认配置')
+    console.log('加载数据失败，使用默认配置')
     await initializeData()
   }
 }
@@ -113,18 +131,28 @@ async function saveData(retryCount: number = 3) {
   for (let i = 0; i < retryCount; i++) {
     try {
       await mkdir(DATA_DIR, { recursive: true })
-      const data = {
+      
+      // 保存配置和统计数据
+      const configData = {
         config: tradingConfig,
+        stats,
+        lastSaved: Date.now(),
+      }
+      await writeFile(CONFIG_PATH, JSON.stringify(configData, null, 2), 'utf-8')
+      
+      // 保存交易记录和状态
+      const tradingData = {
         tradingStatus,
         tradeRecords,
-        stats,
-        lastSaved: Date.now(), // 记录最后保存时间
+        lastSaved: Date.now(),
       }
-      await writeFile(DATA_PATH, JSON.stringify(data, null, 2), 'utf-8')
+      await writeFile(DATA_PATH, JSON.stringify(tradingData, null, 2), 'utf-8')
       
       // 保存成功后验证
-      const savedData = await readFile(DATA_PATH, 'utf-8')
-      JSON.parse(savedData) // 验证JSON格式是否正确
+      const savedConfigData = await readFile(CONFIG_PATH, 'utf-8')
+      const savedTradingData = await readFile(DATA_PATH, 'utf-8')
+      JSON.parse(savedConfigData) // 验证JSON格式是否正确
+      JSON.parse(savedTradingData) // 验证JSON格式是否正确
       
       if (i > 0) {
         console.log(`✅ 数据保存成功（重试 ${i} 次后）`)

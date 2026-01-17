@@ -90,15 +90,15 @@
         <el-card shadow="hover" class="status-card">
           <template #header>
             <div class="card-header">
-              <span>交易状态</span>
+              <span>交易状态（全部）</span>
               <el-tag :type="getStateType(store.tradingStatus.state)" size="large">
                 {{ getStateText(store.tradingStatus.state) }}
               </el-tag>
             </div>
           </template>
-          <div v-if="store.tradingStatus.symbol" class="status-content">
+          <div class="status-content">
             <el-descriptions :column="3" border>
-              <el-descriptions-item label="交易对">{{ store.tradingStatus.symbol }}</el-descriptions-item>
+              <el-descriptions-item label="交易对">{{ store.tradingStatus.symbol || '无' }}</el-descriptions-item>
               <el-descriptions-item label="状态">{{ getStateText(store.tradingStatus.state) }}</el-descriptions-item>
               <el-descriptions-item label="更新时间">
                 {{ new Date(store.tradingStatus.lastUpdateTime).toLocaleString() }}
@@ -109,13 +109,23 @@
               <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单数量">
                 {{ store.tradingStatus.buyOrder.amount }}
               </el-descriptions-item>
+              <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单状态">
+                <el-tag :type="store.tradingStatus.buyOrder.status === 'closed' ? 'success' : store.tradingStatus.buyOrder.status === 'canceled' ? 'danger' : 'warning'">
+                  {{ store.tradingStatus.buyOrder.status === 'closed' ? '已成交' : store.tradingStatus.buyOrder.status === 'canceled' ? '已取消' : '进行中' }}
+                </el-tag>
+              </el-descriptions-item>
               <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单价格">
                 {{ store.tradingStatus.sellOrder.price }}
               </el-descriptions-item>
+              <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单数量">
+                {{ store.tradingStatus.sellOrder.amount }}
+              </el-descriptions-item>
+              <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单状态">
+                <el-tag :type="store.tradingStatus.sellOrder.status === 'closed' ? 'success' : store.tradingStatus.sellOrder.status === 'canceled' ? 'danger' : 'warning'">
+                  {{ store.tradingStatus.sellOrder.status === 'closed' ? '已成交' : store.tradingStatus.sellOrder.status === 'canceled' ? '已取消' : '进行中' }}
+                </el-tag>
+              </el-descriptions-item>
             </el-descriptions>
-          </div>
-          <div v-else class="empty-status">
-            <el-empty description="暂无进行中的交易" />
           </div>
         </el-card>
 
@@ -177,10 +187,10 @@
         <el-card shadow="hover" class="records-card">
           <template #header>
             <div class="card-header">
-              <span>交易记录（今日）</span>
+              <span>交易记录（全部）</span>
             </div>
           </template>
-          <el-table :data="store.todayTrades" stripe style="width: 100%">
+          <el-table :data="store.tradeRecords" stripe style="width: 100%">
             <el-table-column prop="symbol" label="交易对" width="120" />
             <el-table-column label="买入价" width="120">
               <template #default="{ row }">

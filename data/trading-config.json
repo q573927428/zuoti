@@ -1,0 +1,29 @@
+{
+  "config": {
+    "isTestnet": false,
+    "isAutoTrading": true,
+    "symbols": [
+      "ETH/USDT",
+      "BTC/USDT",
+      "BNB/USDT",
+      "SOL/USDT"
+    ],
+    "investmentAmount": 20,
+    "amplitudeThreshold": 2,
+    "trendThreshold": 3,
+    "orderTimeout": 3600000
+  },
+  "stats": {
+    "totalTrades": 1,
+    "successfulTrades": 0,
+    "failedTrades": 0,
+    "totalProfit": 0,
+    "totalProfitRate": 0,
+    "annualizedReturn": 0,
+    "currentDate": "2026-01-18",
+    "tradedSymbols": {
+      "BNB/USDT": 1
+    }
+  },
+  "lastSaved": 1768667940349
+}

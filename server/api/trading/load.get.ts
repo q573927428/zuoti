@@ -4,15 +4,26 @@ import { getCurrentDate } from '../../utils/date'
 
 export default defineEventHandler(async (event) => {
   try {
-    const dataPath = join(process.cwd(), 'data', 'trading-data.json')
+    const dataDir = join(process.cwd(), 'data')
+    const configPath = join(dataDir, 'trading-config.json')  // 配置和统计
+    const dataPath = join(dataDir, 'trading-data.json')      // 交易记录和状态
     
+    // 加载配置和统计数据
+    let configData
     try {
-      const data = await readFile(dataPath, 'utf-8')
-      return JSON.parse(data)
+      const configFile = await readFile(configPath, 'utf-8')
+      configData = JSON.parse(configFile)
     } catch (error) {
-      // 文件不存在或解析失败，返回空数据
-      return {
-        tradeRecords: [],
+      configData = {
+        config: {
+          isTestnet: false,
+          isAutoTrading: false,
+          symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT'],
+          investmentAmount: 100,
+          amplitudeThreshold: 0.5,
+          trendThreshold: 5.0,
+          orderTimeout: 60 * 60 * 1000,
+        },
         stats: {
           totalTrades: 0,
           successfulTrades: 0,
@@ -23,20 +34,30 @@ export default defineEventHandler(async (event) => {
           currentDate: getCurrentDate(),
           tradedSymbols: {},
         },
+      }
+    }
+    
+    // 加载交易数据和状态
+    let tradingData
+    try {
+      const dataFile = await readFile(dataPath, 'utf-8')
+      tradingData = JSON.parse(dataFile)
+    } catch (error) {
+      tradingData = {
         tradingStatus: {
           state: 'IDLE',
           lastUpdateTime: Date.now(),
         },
-        config: {
-          isTestnet: false,
-          isAutoTrading: false,
-          symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT'],
-          investmentAmount: 100,
-          amplitudeThreshold: 0.5,
-          trendThreshold: 5.0,
-          orderTimeout: 60 * 60 * 1000,
-        },
+        tradeRecords: [],
       }
+    }
+    
+    // 合并返回
+    return {
+      config: configData.config,
+      stats: configData.stats,
+      tradingStatus: tradingData.tradingStatus,
+      tradeRecords: tradingData.tradeRecords,
     }
   } catch (error) {
     console.error('加载交易数据失败:', error)
