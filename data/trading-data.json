@@ -1,35 +1,4 @@
 {
-  "config": {
-    "isTestnet": false,
-    "isAutoTrading": true,
-    "symbols": [
-      "ETH/USDT",
-      "BTC/USDT",
-      "BNB/USDT",
-      "SOL/USDT"
-    ],
-    "investmentAmount": 20,
-    "amplitudeThreshold": 0.9,
-    "trendThreshold": 3,
-    "orderTimeout": 3600000
-  },
-  "tradingStatus": {
-    "state": "BUY_ORDER_PLACED",
-    "symbol": "SOL/USDT",
-    "currentTradeId": "trade_1768663370316",
-    "buyOrder": {
-      "orderId": "16089867374",
-      "symbol": "SOL/USDT",
-      "side": "buy",
-      "price": 143.47,
-      "amount": 0.139,
-      "status": "open",
-      "createdAt": 1768663370316
-    },
-    "lastUpdateTime": 1768663370316,
-    "high": 144.65,
-    "low": 143.32
-  },
   "tradeRecords": [
     {
       "id": "trade_1768663370316",
@@ -53,5 +22,35 @@
       "SOL/USDT": 1
     }
   },
-  "lastSaved": 1768663370317
+  "tradingStatus": {
+    "state": "BUY_ORDER_PLACED",
+    "symbol": "SOL/USDT",
+    "currentTradeId": "trade_1768663370316",
+    "buyOrder": {
+      "orderId": "16089867374",
+      "symbol": "SOL/USDT",
+      "side": "buy",
+      "price": 143.47,
+      "amount": 0.139,
+      "status": "open",
+      "createdAt": 1768663370316
+    },
+    "lastUpdateTime": 1768663370316,
+    "high": 144.65,
+    "low": 143.32
+  },
+  "config": {
+    "isTestnet": false,
+    "isAutoTrading": true,
+    "symbols": [
+      "ETH/USDT",
+      "BTC/USDT",
+      "BNB/USDT",
+      "SOL/USDT"
+    ],
+    "investmentAmount": 20,
+    "amplitudeThreshold": 0.9,
+    "trendThreshold": 3,
+    "orderTimeout": 3600000
+  }
 }

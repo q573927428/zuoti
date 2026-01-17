@@ -11,8 +11,8 @@
             </el-tag>
             <el-switch
               v-model="store.config.isAutoTrading"
-              active-text="自动交易开启"
-              inactive-text="自动交易关闭"
+              active-text="开启"
+              inactive-text="交易关闭"
               size="large"
               @change="handleAutoTradingChange"
             />
@@ -37,7 +37,7 @@
             </div>
           </template>
           <el-row :gutter="10">
-            <el-col :span="4" v-for="currency in ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'SOL']" :key="currency">
+            <el-col :xs="12" :sm="8" :md="4" v-for="currency in ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'SOL']" :key="currency">
               <div class="balance-item">
                 <div class="balance-currency">{{ currency }}</div>
                 <div class="balance-amount">{{ (store.balances[currency]?.free || 0).toFixed(currency === 'USDT' || currency === 'USDC' ? 2 : 6) }}</div>
@@ -48,7 +48,7 @@
 
         <!-- 统计卡片 -->
         <el-row :gutter="20" class="stats-row">
-          <el-col :span="6">
+          <el-col :xs="12" :sm="12" :md="6">
             <el-card shadow="hover" class="stat-card">
               <div class="stat-item">
                 <div class="stat-label">总交易次数</div>
@@ -56,7 +56,7 @@
               </div>
             </el-card>
           </el-col>
-          <el-col :span="6">
+          <el-col :xs="12" :sm="12" :md="6">
             <el-card shadow="hover" class="stat-card">
               <div class="stat-item">
                 <div class="stat-label">成功交易</div>
@@ -64,7 +64,7 @@
               </div>
             </el-card>
           </el-col>
-          <el-col :span="6">
+          <el-col :xs="12" :sm="12" :md="6">
             <el-card shadow="hover" class="stat-card">
               <div class="stat-item">
                 <div class="stat-label">总收益 (USDT)</div>
@@ -74,7 +74,7 @@
               </div>
             </el-card>
           </el-col>
-          <el-col :span="6">
+          <el-col :xs="12" :sm="12" :md="6">
             <el-card shadow="hover" class="stat-card">
               <div class="stat-item">
                 <div class="stat-label">年化收益率</div>
@@ -238,7 +238,7 @@
               <span>手动交易</span>
             </div>
           </template>
-          <el-form :model="manualForm" label-width="120px">
+          <el-form :model="manualForm" label-width="60px">
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-form-item label="交易对">
@@ -555,6 +555,8 @@ const getCurrentPrice = (symbol: string) => {
   justify-content: space-between;
   align-items: center;
   height: 100%;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .header-content h1 {
@@ -567,10 +569,161 @@ const getCurrentPrice = (symbol: string) => {
   display: flex;
   gap: 20px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .main-content {
   padding: 20px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 0;
+  }
+  
+  .header-content h1 {
+    font-size: 18px;
+    width: 100%;
+  }
+  
+  .header-actions {
+    width: 100%;
+    /* justify-content: space-between; */
+    gap: 10px;
+  }
+  
+  .main-content {
+    padding: 10px;
+  }
+  
+  /* 余额卡片移动端优化 */
+  .balance-item {
+    padding: 10px 5px;
+    margin-bottom: 10px;
+  }
+  
+  .balance-currency {
+    font-size: 12px;
+  }
+  
+  .balance-amount {
+    font-size: 14px;
+  }
+  
+  /* 统计卡片移动端优化 */
+  .stat-value {
+    font-size: 20px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+  }
+  
+  .stats-row {
+    margin-bottom: 10px;
+  }
+  
+  .stats-row :deep(.el-col) {
+    margin-bottom: 10px;
+  }
+  
+  /* 卡片头部移动端优化 */
+  .card-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .card-header > div {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  
+  .card-header :deep(.el-button) {
+    margin: 0;
+  }
+  
+  /* 表格移动端横向滚动 */
+  .analysis-card :deep(.el-table),
+  .records-card :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  .analysis-card,
+  .records-card {
+    overflow-x: auto;
+  }
+  
+  /* 描述列表移动端优化 */
+  .status-content :deep(.el-descriptions) {
+    font-size: 12px;
+  }
+  
+  .status-content :deep(.el-descriptions__label),
+  .status-content :deep(.el-descriptions__content) {
+    padding: 8px 10px;
+  }
+  
+  /* 手动交易表单移动端优化 */
+  .manual-trading-card :deep(.el-form-item__label) {
+    font-size: 14px;
+  }
+  
+  .manual-trading-card :deep(.el-col) {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  /* 系统配置表单移动端优化 */
+  .config-card :deep(.el-form-item__label) {
+    width: 120px !important;
+    font-size: 14px;
+  }
+  
+  /* 日志卡片移动端优化 */
+  .debug-logs {
+    max-height: 300px;
+  }
+  
+  .log-item {
+    font-size: 11px;
+    padding: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content h1 {
+    font-size: 16px;
+    width: 100px;
+  }
+  
+  .header-actions {
+    font-size: 12px;
+  }
+  
+  .header-actions :deep(.el-switch__label) {
+    font-size: 12px;
+  }
+  
+  .stat-value {
+    font-size: 18px;
+  }
+  
+  .balance-amount {
+    font-size: 12px;
+  }
+  
+  /* 小屏幕下隐藏部分表格列 */
+  .analysis-card :deep(.el-table__body-wrapper) {
+    overflow-x: scroll;
+  }
+  
+  .records-card :deep(.el-table__body-wrapper) {
+    overflow-x: scroll;
+  }
 }
 
 .stats-row {
