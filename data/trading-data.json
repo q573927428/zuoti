@@ -9,12 +9,40 @@
       "SOL/USDT"
     ],
     "investmentAmount": 20,
-    "amplitudeThreshold": 2.5,
+    "amplitudeThreshold": 0.9,
     "trendThreshold": 3,
     "orderTimeout": 3600000
   },
+  "tradingStatus": {
+    "state": "BUY_ORDER_PLACED",
+    "symbol": "SOL/USDT",
+    "currentTradeId": "trade_1768663370316",
+    "buyOrder": {
+      "orderId": "16089867374",
+      "symbol": "SOL/USDT",
+      "side": "buy",
+      "price": 143.47,
+      "amount": 0.139,
+      "status": "open",
+      "createdAt": 1768663370316
+    },
+    "lastUpdateTime": 1768663370316,
+    "high": 144.65,
+    "low": 143.32
+  },
+  "tradeRecords": [
+    {
+      "id": "trade_1768663370316",
+      "symbol": "SOL/USDT",
+      "buyOrderId": "16089867374",
+      "buyPrice": 143.47,
+      "amount": 0.139,
+      "startTime": 1768663370316,
+      "status": "in_progress"
+    }
+  ],
   "stats": {
-    "totalTrades": 0,
+    "totalTrades": 1,
     "successfulTrades": 0,
     "failedTrades": 0,
     "totalProfit": 0,
@@ -22,7 +50,8 @@
     "annualizedReturn": 0,
     "currentDate": "2026-01-17",
     "tradedSymbols": {
-      "SOL/USDT": 0
+      "SOL/USDT": 1
     }
-  }
+  },
+  "lastSaved": 1768663370317
 }

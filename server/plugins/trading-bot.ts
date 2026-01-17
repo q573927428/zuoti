@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import type { TradingSymbol, TradingStatus, TradeRecord, SystemConfig, SystemStats } from '../../types/trading'
 import { findBestTradingSymbol, calculateBuyAmount, calculateProfit, checkProtection, checkOrderTimeout } from '../utils/strategy'
-import { createBuyOrder, createSellOrder, fetchOrderStatus, cancelOrder, fetchCurrentPrice, getBinanceInstance, resetBinanceInstance } from '../utils/binance'
+import { createBuyOrder, createSellOrder, fetchOrderStatus, cancelOrder, fetchCurrentPrice, getBinanceInstance, resetBinanceInstance, fetchBalance } from '../utils/binance'
 import { getCurrentDate, getDateFromTimestamp } from '../utils/date'
 
 // 全局状态
@@ -10,6 +10,9 @@ let tradingConfig: SystemConfig
 let tradingStatus: TradingStatus
 let tradeRecords: TradeRecord[]
 let stats: SystemStats
+
+// 并发锁 - 防止多个交易循环同时执行
+let isTrading = false
 
 // 数据文件路径
 const DATA_DIR = join(process.cwd(), 'data')
@@ -102,21 +105,48 @@ async function initializeData() {
 }
 
 /**
- * 保存数据
+ * 保存数据（带重试机制）
  */
-async function saveData() {
-  try {
-    await mkdir(DATA_DIR, { recursive: true })
-    const data = {
-      config: tradingConfig,
-      tradingStatus,
-      tradeRecords,
-      stats,
+async function saveData(retryCount: number = 3) {
+  let lastError: any
+  
+  for (let i = 0; i < retryCount; i++) {
+    try {
+      await mkdir(DATA_DIR, { recursive: true })
+      const data = {
+        config: tradingConfig,
+        tradingStatus,
+        tradeRecords,
+        stats,
+        lastSaved: Date.now(), // 记录最后保存时间
+      }
+      await writeFile(DATA_PATH, JSON.stringify(data, null, 2), 'utf-8')
+      
+      // 保存成功后验证
+      const savedData = await readFile(DATA_PATH, 'utf-8')
+      JSON.parse(savedData) // 验证JSON格式是否正确
+      
+      if (i > 0) {
+        console.log(`✅ 数据保存成功（重试 ${i} 次后）`)
+      }
+      return true
+    } catch (error) {
+      lastError = error
+      console.error(`❌ 保存数据失败 (尝试 ${i + 1}/${retryCount}):`, error)
+      
+      if (i < retryCount - 1) {
+        // 等待一段时间后重试
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
+      }
     }
-    await writeFile(DATA_PATH, JSON.stringify(data, null, 2), 'utf-8')
-  } catch (error) {
-    console.error('保存数据失败:', error)
   }
+  
+  // 所有重试都失败
+  console.error(`🚨 严重错误：数据保存失败，已重试 ${retryCount} 次`)
+  console.error('最后错误:', lastError)
+  console.error('⚠️  请立即检查磁盘空间和文件权限！当前状态可能未保存！')
+  
+  return false
 }
 
 /**
@@ -147,6 +177,14 @@ async function checkAndResetDaily() {
  * 主交易循环
  */
 async function tradingLoop() {
+  // 并发锁 - 防止多个循环同时执行
+  if (isTrading) {
+    console.log('⏳ 上一个交易循环还在执行中，跳过本次')
+    return
+  }
+  
+  isTrading = true
+  
   try {
     // 重新加载配置
     await loadData()
@@ -156,7 +194,7 @@ async function tradingLoop() {
     
     // 如果自动交易未开启，跳过
     if (!tradingConfig.isAutoTrading) {
-      console.log('⏸️  自动交易未开启，跳过')
+      // console.log('⏸️  自动交易未开启，跳过')
       return
     }
     
@@ -188,6 +226,16 @@ async function tradingLoop() {
     }
   } catch (error) {
     console.error('❌ 交易循环错误:', error)
+    // 记录详细错误信息用于排查
+    console.error('错误详情:', {
+      state: tradingStatus.state,
+      symbol: tradingStatus.symbol,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    })
+  } finally {
+    // 无论成功还是失败，都要释放锁
+    isTrading = false
   }
 }
 
@@ -220,55 +268,146 @@ async function handleIdleState() {
     if (result.bestSymbol) {
       console.log(`✅ 找到交易机会: ${result.bestSymbol.symbol}, 振幅: ${result.bestSymbol.amplitude}%`)
       
-      // 计算买入数量
-      const amount = calculateBuyAmount(tradingConfig.investmentAmount, result.bestSymbol.buyPrice)
-      
-      // 创建买单
-      const order = await createBuyOrder(result.bestSymbol.symbol, amount, result.bestSymbol.buyPrice)
-      
-      // 创建交易记录
-      const tradeId = `trade_${Date.now()}`
-      const tradeRecord: TradeRecord = {
-        id: tradeId,
-        symbol: result.bestSymbol.symbol,
-        buyOrderId: order.id,
-        buyPrice: result.bestSymbol.buyPrice,
-        amount,
-        startTime: Date.now(),
-        status: 'in_progress',
+      // ===== 安全检查 1: 余额验证 =====
+      let balance
+      try {
+        balance = await fetchBalance()
+        const usdtBalance = balance.free?.USDT || 0
+        
+        console.log(`💰 账户余额: ${usdtBalance.toFixed(2)} USDT`)
+        
+        // 检查余额是否充足（需要额外留 5% 作为手续费缓冲）
+        const requiredAmount = tradingConfig.investmentAmount * 1.05
+        if (usdtBalance < requiredAmount) {
+          console.error(`❌ 余额不足！需要: ${requiredAmount.toFixed(2)} USDT, 可用: ${usdtBalance.toFixed(2)} USDT`)
+          return
+        }
+      } catch (balanceError) {
+        console.error('❌ 查询余额失败:', balanceError)
+        return
       }
       
-      tradeRecords.push(tradeRecord)
-      stats.totalTrades++
-      
-      if (!stats.tradedSymbols[result.bestSymbol.symbol]) {
-        stats.tradedSymbols[result.bestSymbol.symbol] = 0
-      }
-      stats.tradedSymbols[result.bestSymbol.symbol]++
-      
-      // 更新状态
-      tradingStatus = {
-        state: 'BUY_ORDER_PLACED',
-        symbol: result.bestSymbol.symbol,
-        currentTradeId: tradeId,
-        buyOrder: {
-          orderId: order.id,
+      // ===== 安全检查 2: 交易精度验证 =====
+      let markets
+      try {
+        const binance = getBinanceInstance(tradingConfig.isTestnet)
+        await binance.loadMarkets()
+        markets = binance.markets
+        
+        const market = markets[result.bestSymbol.symbol]
+        if (!market) {
+          console.error(`❌ 未找到交易对 ${result.bestSymbol.symbol} 的市场信息`)
+          return
+        }
+        
+        // 获取交易对的限制
+        const limits = market.limits
+        const precision = market.precision
+        
+        console.log(`📊 ${result.bestSymbol.symbol} 交易限制:`, {
+          minAmount: limits.amount?.min,
+          maxAmount: limits.amount?.max,
+          minCost: limits.cost?.min,
+          amountPrecision: precision.amount,
+          pricePrecision: precision.price
+        })
+        
+        // 计算买入数量
+        let amount = calculateBuyAmount(tradingConfig.investmentAmount, result.bestSymbol.buyPrice)
+        
+        // 根据精度调整数量（使用最小变动单位 stepSize）
+        if (precision.amount) {
+          // 方法：向下取整到最小变动单位的倍数
+          amount = Math.floor(amount / precision.amount) * precision.amount
+          // 保留足够的小数位数
+          amount = parseFloat(amount.toFixed(8))
+        }
+        
+        // 检查最小交易数量
+        if (limits.amount?.min && amount < limits.amount.min) {
+          console.error(`❌ 交易数量 ${amount} 小于最小限制 ${limits.amount.min}`)
+          console.error(`💡 提示: 投资金额 ${tradingConfig.investmentAmount} USDT 太少，建议增加到 ${(limits.amount.min * result.bestSymbol.buyPrice * 1.1).toFixed(2)} USDT 以上`)
+          return
+        }
+        
+        // 检查最大交易数量
+        if (limits.amount?.max && amount > limits.amount.max) {
+          console.error(`❌ 交易数量 ${amount} 超过最大限制 ${limits.amount.max}`)
+          return
+        }
+        
+        // 检查最小交易金额（数量 * 价格）
+        const totalCost = amount * result.bestSymbol.buyPrice
+        if (limits.cost?.min && totalCost < limits.cost.min) {
+          console.error(`❌ 交易金额 ${totalCost.toFixed(2)} USDT 小于最小限制 ${limits.cost.min} USDT`)
+          console.error(`💡 提示: 建议将投资金额增加到 ${(limits.cost.min * 1.1).toFixed(2)} USDT 以上`)
+          return
+        }
+        
+        // 调整价格精度（使用价格的最小变动单位）
+        let buyPrice = result.bestSymbol.buyPrice
+        if (precision.price) {
+          // 方法：向下取整到最小变动单位的倍数
+          buyPrice = Math.floor(buyPrice / precision.price) * precision.price
+          // 保留足够的小数位数
+          buyPrice = parseFloat(buyPrice.toFixed(8))
+        }
+        
+        console.log(`✅ 精度验证通过 - 数量: ${amount}, 价格: ${buyPrice}, 总额: ${totalCost.toFixed(2)} USDT`)
+        
+        // 创建买单
+        const order = await createBuyOrder(result.bestSymbol.symbol, amount, buyPrice)
+        
+        // 使用调整后的值
+        result.bestSymbol.buyPrice = buyPrice
+        
+        // 创建交易记录
+        const tradeId = `trade_${Date.now()}`
+        const tradeRecord: TradeRecord = {
+          id: tradeId,
           symbol: result.bestSymbol.symbol,
-          side: 'buy',
-          price: result.bestSymbol.buyPrice,
+          buyOrderId: order.id,
+          buyPrice: result.bestSymbol.buyPrice,
           amount,
-          status: 'open',
-          createdAt: Date.now(),
-        },
-        lastUpdateTime: Date.now(),
+          startTime: Date.now(),
+          status: 'in_progress',
+        }
+        
+        tradeRecords.push(tradeRecord)
+        stats.totalTrades++
+        
+        if (!stats.tradedSymbols[result.bestSymbol.symbol]) {
+          stats.tradedSymbols[result.bestSymbol.symbol] = 0
+        }
+        stats.tradedSymbols[result.bestSymbol.symbol]++
+        
+        // 更新状态
+        tradingStatus = {
+          state: 'BUY_ORDER_PLACED',
+          symbol: result.bestSymbol.symbol,
+          currentTradeId: tradeId,
+          buyOrder: {
+            orderId: order.id,
+            symbol: result.bestSymbol.symbol,
+            side: 'buy',
+            price: result.bestSymbol.buyPrice,
+            amount,
+            status: 'open',
+            createdAt: Date.now(),
+          },
+          lastUpdateTime: Date.now(),
+        }
+        
+        // 保存高低价信息（用于保护机制）
+        tradingStatus.high = result.bestSymbol.high
+        tradingStatus.low = result.bestSymbol.low
+        
+        await saveData()
+        console.log(`💰 买单已挂: ${result.bestSymbol.symbol} @ ${result.bestSymbol.buyPrice}`)
+      } catch (precisionError) {
+        console.error('❌ 交易精度验证失败:', precisionError)
+        return
       }
-      
-      // 保存高低价信息（用于保护机制）
-      tradingStatus.high = result.bestSymbol.high
-      tradingStatus.low = result.bestSymbol.low
-      
-      await saveData()
-      console.log(`💰 买单已挂: ${result.bestSymbol.symbol} @ ${result.bestSymbol.buyPrice}`)
     } else {
       console.log('💤 未找到符合条件的交易机会')
     }
@@ -282,17 +421,45 @@ async function handleIdleState() {
  */
 async function handleBuyOrderPlacedState() {
   try {
-    if (!tradingStatus.buyOrder || !tradingStatus.symbol) return
+    if (!tradingStatus.buyOrder || !tradingStatus.symbol) {
+      console.error('⚠️  买单状态异常：缺少必要信息')
+      return
+    }
     
-    // 检查保护机制
-    const currentPrice = await fetchCurrentPrice(tradingStatus.symbol)
-    const protection = checkProtection(currentPrice, tradingStatus.high!, tradingStatus.low!)
+    // ===== 关键修复：先查询订单状态 =====
+    let orderStatus
+    try {
+      orderStatus = await fetchOrderStatus(tradingStatus.symbol, tradingStatus.buyOrder.orderId)
+    } catch (error) {
+      console.error('查询买单状态失败，网络异常，等待下次重试:', error)
+      return // 网络异常时不做任何操作，等待下次循环重试
+    }
     
-    if (protection.needProtection) {
-      console.log(`⚠️  触发保护机制: ${protection.reason}`)
-      await cancelOrder(tradingStatus.symbol, tradingStatus.buyOrder.orderId)
+    // 1. 检查订单是否已完全成交
+    if (orderStatus.status === 'closed') {
+      console.log(`✅ 买单已完全成交: ${tradingStatus.symbol}`)
       
-      // 更新交易记录
+      // 更新实际成交数量和价格（使用实际成交数据）
+      if (orderStatus.filled) {
+        tradingStatus.buyOrder.amount = orderStatus.filled
+      }
+      if (orderStatus.average) {
+        tradingStatus.buyOrder.price = orderStatus.average
+      }
+      
+      tradingStatus.buyOrder.status = 'closed'
+      tradingStatus.buyOrder.filledAt = Date.now()
+      tradingStatus.state = 'BOUGHT'
+      await saveData()
+      
+      console.log(`💎 持仓信息: ${tradingStatus.buyOrder.amount} ${tradingStatus.symbol} @ ${tradingStatus.buyOrder.price}`)
+      return
+    }
+    
+    // 2. 检查订单是否已被取消
+    if (orderStatus.status === 'canceled') {
+      console.log(`⚠️  买单已被取消: ${tradingStatus.symbol}`)
+      
       const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
       if (record) {
         record.status = 'failed'
@@ -305,43 +472,109 @@ async function handleBuyOrderPlacedState() {
       tradingStatus.currentTradeId = undefined
       tradingStatus.buyOrder = undefined
       await saveData()
+      return
+    }
+    
+    // 3. 订单仍在等待成交 - 检查是否需要取消
+    
+    // 检查保护机制（价格突破原区间）
+    const currentPrice = await fetchCurrentPrice(tradingStatus.symbol)
+    const protection = checkProtection(currentPrice, tradingStatus.high!, tradingStatus.low!)
+    
+    if (protection.needProtection) {
+      console.log(`⚠️  触发保护机制: ${protection.reason}`)
+      console.log(`💡 当前价格: ${currentPrice}, 原区间: [${tradingStatus.low}, ${tradingStatus.high}]`)
+      
+      // 检查是否有部分成交
+      if (orderStatus.filled && orderStatus.filled > 0) {
+        console.log(`⚠️  订单部分成交 ${orderStatus.filled}/${orderStatus.amount}，取消剩余部分`)
+      }
+      
+      try {
+        await cancelOrder(tradingStatus.symbol, tradingStatus.buyOrder.orderId)
+        console.log('✅ 买单已取消')
+      } catch (cancelError) {
+        console.error('取消买单失败:', cancelError)
+        // 即使取消失败，也标记为失败状态
+      }
+      
+      // 如果有部分成交，需要特殊处理
+      if (orderStatus.filled && orderStatus.filled > 0) {
+        console.log(`⚠️  部分成交处理：持有 ${orderStatus.filled} ${tradingStatus.symbol}，需要手动处理`)
+        // 记录部分成交信息
+        tradingStatus.buyOrder.amount = orderStatus.filled
+        tradingStatus.buyOrder.status = 'closed'
+        tradingStatus.state = 'BOUGHT' // 进入已买入状态，尝试卖出
+        await saveData()
+      } else {
+        // 完全未成交，标记为失败
+        const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+        if (record) {
+          record.status = 'failed'
+          record.endTime = Date.now()
+        }
+        stats.failedTrades++
+        
+        tradingStatus.state = 'IDLE'
+        tradingStatus.symbol = undefined
+        tradingStatus.currentTradeId = undefined
+        tradingStatus.buyOrder = undefined
+        await saveData()
+      }
       return
     }
     
     // 检查超时
     const isTimeout = checkOrderTimeout(tradingStatus.buyOrder.createdAt, tradingConfig.orderTimeout)
     if (isTimeout) {
-      console.log('⏱️  买单超时，取消订单')
-      await cancelOrder(tradingStatus.symbol, tradingStatus.buyOrder.orderId)
+      console.log(`⏱️  买单超时 (${tradingConfig.orderTimeout / 1000}秒)，准备取消订单`)
       
-      // 更新交易记录
-      const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
-      if (record) {
-        record.status = 'failed'
-        record.endTime = Date.now()
+      // 检查是否有部分成交
+      if (orderStatus.filled && orderStatus.filled > 0) {
+        console.log(`⚠️  订单部分成交 ${orderStatus.filled}/${orderStatus.amount}，取消剩余部分`)
       }
-      stats.failedTrades++
       
-      tradingStatus.state = 'IDLE'
-      tradingStatus.symbol = undefined
-      tradingStatus.currentTradeId = undefined
-      tradingStatus.buyOrder = undefined
-      await saveData()
+      try {
+        await cancelOrder(tradingStatus.symbol, tradingStatus.buyOrder.orderId)
+        console.log('✅ 超时买单已取消')
+      } catch (cancelError) {
+        console.error('取消超时买单失败:', cancelError)
+      }
+      
+      // 如果有部分成交，进入已买入状态
+      if (orderStatus.filled && orderStatus.filled > 0) {
+        tradingStatus.buyOrder.amount = orderStatus.filled
+        tradingStatus.buyOrder.status = 'closed'
+        tradingStatus.state = 'BOUGHT'
+        await saveData()
+      } else {
+        // 完全未成交，标记为失败
+        const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+        if (record) {
+          record.status = 'failed'
+          record.endTime = Date.now()
+        }
+        stats.failedTrades++
+        
+        tradingStatus.state = 'IDLE'
+        tradingStatus.symbol = undefined
+        tradingStatus.currentTradeId = undefined
+        tradingStatus.buyOrder = undefined
+        await saveData()
+      }
       return
     }
     
-    // 查询订单状态
-    const orderStatus = await fetchOrderStatus(tradingStatus.symbol, tradingStatus.buyOrder.orderId)
+    // 订单仍在等待，继续监控
+    console.log(`⏳ 买单等待成交中: ${tradingStatus.symbol} ${orderStatus.filled || 0}/${orderStatus.amount}`)
     
-    if (orderStatus.status === 'closed') {
-      console.log(`✅ 买单已成交: ${tradingStatus.symbol}`)
-      tradingStatus.buyOrder.status = 'closed'
-      tradingStatus.buyOrder.filledAt = Date.now()
-      tradingStatus.state = 'BOUGHT'
-      await saveData()
-    }
   } catch (error) {
-    console.error('处理买单状态失败:', error)
+    console.error('❌ 处理买单状态失败:', error)
+    console.error('详细信息:', {
+      symbol: tradingStatus.symbol,
+      orderId: tradingStatus.buyOrder?.orderId,
+      error: error instanceof Error ? error.message : String(error)
+    })
   }
 }
 
@@ -402,32 +635,33 @@ async function handleBoughtState() {
  */
 async function handleSellOrderPlacedState() {
   try {
-    if (!tradingStatus.sellOrder || !tradingStatus.symbol || !tradingStatus.buyOrder) return
-    
-    // 检查超时
-    const isTimeout = checkOrderTimeout(tradingStatus.sellOrder.createdAt, tradingConfig.orderTimeout)
-    if (isTimeout) {
-      console.log('⏱️  卖单超时，取消订单')
-      await cancelOrder(tradingStatus.symbol, tradingStatus.sellOrder.orderId)
-      
-      // 回到已买入状态，等待重新挂卖单
-      tradingStatus.state = 'BOUGHT'
-      tradingStatus.sellOrder = undefined
-      await saveData()
+    if (!tradingStatus.sellOrder || !tradingStatus.symbol || !tradingStatus.buyOrder) {
+      console.error('⚠️  卖单状态异常：缺少必要信息')
       return
     }
     
-    // 查询订单状态
-    const orderStatus = await fetchOrderStatus(tradingStatus.symbol, tradingStatus.sellOrder.orderId)
+    // ===== 关键修复：先查询订单状态 =====
+    let orderStatus
+    try {
+      orderStatus = await fetchOrderStatus(tradingStatus.symbol, tradingStatus.sellOrder.orderId)
+    } catch (error) {
+      console.error('查询卖单状态失败，网络异常，等待下次重试:', error)
+      return // 网络异常时不做任何操作，等待下次循环重试
+    }
     
+    // 1. 检查订单是否已完全成交
     if (orderStatus.status === 'closed') {
-      console.log(`✅ 卖单已成交: ${tradingStatus.symbol}`)
+      console.log(`✅ 卖单已完全成交: ${tradingStatus.symbol}`)
+      
+      // 使用实际成交价格计算收益
+      const actualSellPrice = orderStatus.average || tradingStatus.sellOrder.price
+      const actualAmount = orderStatus.filled || tradingStatus.buyOrder.amount
       
       // 计算收益
       const profitResult = calculateProfit(
-        tradingStatus.buyOrder.amount,
+        actualAmount,
         tradingStatus.buyOrder.price,
-        tradingStatus.sellOrder.price
+        actualSellPrice
       )
       
       // 更新交易记录
@@ -437,6 +671,8 @@ async function handleSellOrderPlacedState() {
         record.profitRate = profitResult.profitRate
         record.status = 'completed'
         record.endTime = Date.now()
+        // 更新实际成交价格
+        record.sellPrice = actualSellPrice
       }
       
       // 更新统计
@@ -458,9 +694,139 @@ async function handleSellOrderPlacedState() {
       
       tradingStatus.state = 'DONE'
       await saveData()
+      return
     }
+    
+    // 2. 检查订单是否已被取消
+    if (orderStatus.status === 'canceled') {
+      console.log(`⚠️  卖单已被取消: ${tradingStatus.symbol}，回到已买入状态`)
+      
+      // 回到已买入状态，等待重新挂卖单
+      tradingStatus.state = 'BOUGHT'
+      tradingStatus.sellOrder = undefined
+      await saveData()
+      return
+    }
+    
+    // 3. 订单仍在等待成交 - 检查是否需要取消
+    
+    // 检查价格保护机制（防止市价大幅偏离卖单价）
+    const currentPrice = await fetchCurrentPrice(tradingStatus.symbol)
+    
+    // 如果当前价格跌破原买入区间的下界，说明市场反转，需要及时止损
+    if (tradingStatus.low && currentPrice < tradingStatus.low) {
+      console.log(`⚠️  市场反转保护: 当前价格 ${currentPrice} 已跌破原区间下界 ${tradingStatus.low}`)
+      console.log(`💡 立即取消高位卖单，准备以市价附近重新挂单`)
+      
+      // 检查是否有部分成交
+      if (orderStatus.filled && orderStatus.filled > 0) {
+        console.log(`⚠️  卖单部分成交 ${orderStatus.filled}/${orderStatus.amount}`)
+      }
+      
+      try {
+        await cancelOrder(tradingStatus.symbol, tradingStatus.sellOrder.orderId)
+        console.log('✅ 卖单已取消')
+      } catch (cancelError) {
+        console.error('取消卖单失败:', cancelError)
+      }
+      
+      // 回到已买入状态，下次循环会重新分析市场并挂卖单
+      tradingStatus.state = 'BOUGHT'
+      tradingStatus.sellOrder = undefined
+      await saveData()
+      return
+    }
+    
+    // 检查卖单价格是否过高（与当前市价偏离超过 2%）
+    const priceDeviation = ((tradingStatus.sellOrder.price - currentPrice) / currentPrice) * 100
+    if (priceDeviation > 2) {
+      console.log(`⚠️  卖单价格偏离过大: 挂单价 ${tradingStatus.sellOrder.price}, 当前价 ${currentPrice}, 偏离 ${priceDeviation.toFixed(2)}%`)
+      console.log(`💡 取消卖单，重新以合理价格挂单`)
+      
+      try {
+        await cancelOrder(tradingStatus.symbol, tradingStatus.sellOrder.orderId)
+        console.log('✅ 偏离卖单已取消')
+      } catch (cancelError) {
+        console.error('取消偏离卖单失败:', cancelError)
+      }
+      
+      // 回到已买入状态
+      tradingStatus.state = 'BOUGHT'
+      tradingStatus.sellOrder = undefined
+      await saveData()
+      return
+    }
+    
+    // 检查超时
+    const isTimeout = checkOrderTimeout(tradingStatus.sellOrder.createdAt, tradingConfig.orderTimeout)
+    if (isTimeout) {
+      console.log(`⏱️  卖单超时 (${tradingConfig.orderTimeout / 1000}秒)，准备取消订单`)
+      
+      // 检查是否有部分成交
+      if (orderStatus.filled && orderStatus.filled > 0) {
+        console.log(`⚠️  卖单部分成交 ${orderStatus.filled}/${orderStatus.amount}，取消剩余部分`)
+      }
+      
+      try {
+        await cancelOrder(tradingStatus.symbol, tradingStatus.sellOrder.orderId)
+        console.log('✅ 超时卖单已取消')
+      } catch (cancelError) {
+        console.error('取消超时卖单失败:', cancelError)
+      }
+      
+      // 处理部分成交情况
+      if (orderStatus.filled && orderStatus.filled > 0) {
+        console.log(`⚠️  部分成交处理：已卖出 ${orderStatus.filled}，剩余 ${orderStatus.amount - orderStatus.filled}`)
+        // 如果大部分已成交（>80%），标记交易完成
+        const filledPercent = (orderStatus.filled / orderStatus.amount) * 100
+        if (filledPercent > 80) {
+          console.log(`✅ 已成交 ${filledPercent.toFixed(2)}%，视为完成`)
+          
+          const actualSellPrice = orderStatus.average || tradingStatus.sellOrder.price
+          const profitResult = calculateProfit(
+            orderStatus.filled,
+            tradingStatus.buyOrder.price,
+            actualSellPrice
+          )
+          
+          const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+          if (record) {
+            record.profit = profitResult.profit
+            record.profitRate = profitResult.profitRate
+            record.status = 'completed'
+            record.endTime = Date.now()
+          }
+          
+          stats.successfulTrades++
+          stats.totalProfit += profitResult.profit
+          
+          tradingStatus.state = 'DONE'
+        } else {
+          // 仍有较多未成交，回到已买入状态重新挂单
+          tradingStatus.buyOrder.amount = orderStatus.amount - orderStatus.filled
+          tradingStatus.state = 'BOUGHT'
+          tradingStatus.sellOrder = undefined
+        }
+      } else {
+        // 完全未成交，回到已买入状态
+        tradingStatus.state = 'BOUGHT'
+        tradingStatus.sellOrder = undefined
+      }
+      
+      await saveData()
+      return
+    }
+    
+    // 订单仍在等待，继续监控
+    console.log(`⏳ 卖单等待成交中: ${tradingStatus.symbol} ${orderStatus.filled || 0}/${orderStatus.amount}`)
+    
   } catch (error) {
-    console.error('处理卖单状态失败:', error)
+    console.error('❌ 处理卖单状态失败:', error)
+    console.error('详细信息:', {
+      symbol: tradingStatus.symbol,
+      orderId: tradingStatus.sellOrder?.orderId,
+      error: error instanceof Error ? error.message : String(error)
+    })
   }
 }
 
