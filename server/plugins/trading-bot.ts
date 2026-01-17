@@ -178,26 +178,180 @@ async function saveData(retryCount: number = 3) {
 }
 
 /**
- * 检查并重置每日数据
+ * 检查并重置每日数据（严格日切处理）
  */
 async function checkAndResetDaily() {
   const today = getCurrentDate()
   if (stats.currentDate !== today) {
     console.log(`📅 日期变更: ${stats.currentDate} -> ${today}`)
-    stats.currentDate = today
-    stats.tradedSymbols = {}
+    console.log('⚠️  开始执行严格日切处理...')
     
-    // 如果有进行中的交易，重置状态
+    // 如果有进行中的交易，需要强制平仓和清理
     if (tradingStatus.state !== 'IDLE' && tradingStatus.state !== 'DONE') {
-      console.log('🔄 重置未完成的交易状态')
-      tradingStatus = {
-        state: 'IDLE',
-        lastUpdateTime: Date.now(),
+      console.log(`⚠️  检测到未完成交易，状态: ${tradingStatus.state}`)
+      
+      try {
+        // 情况1: 买单已挂但未成交
+        if (tradingStatus.state === 'BUY_ORDER_PLACED' && tradingStatus.buyOrder) {
+          console.log('🔄 处理未成交买单...')
+          
+          // 查询订单状态
+          const orderStatus = await fetchOrderStatus(tradingStatus.symbol!, tradingStatus.buyOrder.orderId)
+          
+          // 取消订单
+          try {
+            await cancelOrder(tradingStatus.symbol!, tradingStatus.buyOrder.orderId)
+            console.log('✅ 买单已取消')
+          } catch (error) {
+            console.error('❌ 取消买单失败:', error)
+          }
+          
+          // 如果有部分成交，需要立即市价卖出
+          if (orderStatus.filled && orderStatus.filled > 0) {
+            console.log(`⚠️  买单部分成交 ${orderStatus.filled}，立即市价卖出`)
+            const currentPrice = await fetchCurrentPrice(tradingStatus.symbol!)
+            try {
+              await createSellOrder(tradingStatus.symbol!, orderStatus.filled, currentPrice * 0.999) // 低于市价0.1%确保成交
+              console.log('✅ 日切强平卖单已提交')
+            } catch (error) {
+              console.error('❌ 日切强平失败:', error)
+            }
+          }
+          
+          // 标记交易为失败
+          const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+          if (record) {
+            record.status = 'failed'
+            record.endTime = Date.now()
+          }
+          stats.failedTrades++
+        }
+        
+        // 情况2: 已买入，卖单已挂但未成交
+        else if (tradingStatus.state === 'SELL_ORDER_PLACED' && tradingStatus.sellOrder) {
+          console.log('🔄 处理未成交卖单，准备强制平仓...')
+          
+          // 查询订单状态
+          const orderStatus = await fetchOrderStatus(tradingStatus.symbol!, tradingStatus.sellOrder.orderId)
+          
+          // 取消卖单
+          try {
+            await cancelOrder(tradingStatus.symbol!, tradingStatus.sellOrder.orderId)
+            console.log('✅ 卖单已取消')
+          } catch (error) {
+            console.error('❌ 取消卖单失败:', error)
+          }
+          
+          // 计算剩余持仓
+          const remainingAmount = tradingStatus.buyOrder!.amount - (orderStatus.filled || 0)
+          
+          if (remainingAmount > 0) {
+            console.log(`⚠️  剩余持仓 ${remainingAmount}，立即市价强平`)
+            const currentPrice = await fetchCurrentPrice(tradingStatus.symbol!)
+            
+            try {
+              // 以略低于市价的价格提交卖单，确保成交
+              await createSellOrder(tradingStatus.symbol!, remainingAmount, currentPrice * 0.999)
+              console.log('✅ 日切强平卖单已提交')
+              
+              // 等待3秒查询是否成交
+              await new Promise(resolve => setTimeout(resolve, 3000))
+              
+              // 计算强平后的收益
+              const profitResult = calculateProfit(
+                remainingAmount,
+                tradingStatus.buyOrder!.price,
+                currentPrice * 0.999
+              )
+              
+              console.log(`📊 日切强平收益: ${profitResult.profit.toFixed(2)} USDT (${profitResult.profitRate.toFixed(2)}%)`)
+              
+              // 更新交易记录
+              const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+              if (record) {
+                record.profit = profitResult.profit
+                record.profitRate = profitResult.profitRate
+                record.status = 'completed'
+                record.endTime = Date.now()
+                record.sellPrice = currentPrice * 0.999
+              }
+              
+              // 更新统计
+              stats.successfulTrades++
+              stats.totalProfit += profitResult.profit
+            } catch (error) {
+              console.error('❌ 日切强平失败:', error)
+              // 标记为失败
+              const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+              if (record) {
+                record.status = 'failed'
+                record.endTime = Date.now()
+              }
+              stats.failedTrades++
+            }
+          }
+        }
+        
+        // 情况3: 已买入但未挂卖单
+        else if (tradingStatus.state === 'BOUGHT' && tradingStatus.buyOrder) {
+          console.log('🔄 检测到已买入但未挂卖单，立即市价强平')
+          const currentPrice = await fetchCurrentPrice(tradingStatus.symbol!)
+          
+          try {
+            await createSellOrder(tradingStatus.symbol!, tradingStatus.buyOrder.amount, currentPrice * 0.999)
+            console.log('✅ 日切强平卖单已提交')
+            
+            // 等待3秒
+            await new Promise(resolve => setTimeout(resolve, 3000))
+            
+            const profitResult = calculateProfit(
+              tradingStatus.buyOrder.amount,
+              tradingStatus.buyOrder.price,
+              currentPrice * 0.999
+            )
+            
+            console.log(`📊 日切强平收益: ${profitResult.profit.toFixed(2)} USDT (${profitResult.profitRate.toFixed(2)}%)`)
+            
+            const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+            if (record) {
+              record.profit = profitResult.profit
+              record.profitRate = profitResult.profitRate
+              record.status = 'completed'
+              record.endTime = Date.now()
+              record.sellPrice = currentPrice * 0.999
+            }
+            
+            stats.successfulTrades++
+            stats.totalProfit += profitResult.profit
+          } catch (error) {
+            console.error('❌ 日切强平失败:', error)
+            const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+            if (record) {
+              record.status = 'failed'
+              record.endTime = Date.now()
+            }
+            stats.failedTrades++
+          }
+        }
+      } catch (error) {
+        console.error('❌ 日切处理失败:', error)
       }
     }
     
+    // 重置状态
+    console.log('✅ 日切处理完成，重置交易状态')
+    tradingStatus = {
+      state: 'IDLE',
+      lastUpdateTime: Date.now(),
+    }
+    
+    // 重置每日统计
+    stats.currentDate = today
+    stats.tradedSymbols = {}
+    
     // 保存更新的日期
     await saveData()
+    console.log('✅ 日切完成，系统已准备好新的一天')
   }
 }
 
@@ -613,6 +767,55 @@ async function handleBoughtState() {
   try {
     if (!tradingStatus.symbol || !tradingStatus.buyOrder) return
     
+    // ===== 优先检查硬止损 =====
+    const currentPrice = await fetchCurrentPrice(tradingStatus.symbol)
+    const lossRate = ((currentPrice - tradingStatus.buyOrder.price) / tradingStatus.buyOrder.price) * 100
+    const STOP_LOSS_THRESHOLD = -3 // -3% 硬止损
+    
+    if (lossRate <= STOP_LOSS_THRESHOLD) {
+      console.log(`🛑 触发硬止损（已买入状态）！`)
+      console.log(`💡 买入价: ${tradingStatus.buyOrder.price}, 当前价: ${currentPrice}, 亏损: ${lossRate.toFixed(2)}%`)
+      
+      try {
+        console.log('⚠️  正在执行市价止损...')
+        await createSellOrder(tradingStatus.symbol, tradingStatus.buyOrder.amount, currentPrice * 0.998)
+        console.log('✅ 止损卖单已提交')
+        
+        // 等待3秒确认成交
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        
+        // 计算止损后的亏损
+        const profitResult = calculateProfit(
+          tradingStatus.buyOrder.amount,
+          tradingStatus.buyOrder.price,
+          currentPrice * 0.998
+        )
+        
+        console.log(`📊 止损完成，亏损: ${profitResult.profit.toFixed(2)} USDT (${profitResult.profitRate.toFixed(2)}%)`)
+        
+        // 更新交易记录
+        const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+        if (record) {
+          record.profit = profitResult.profit
+          record.profitRate = profitResult.profitRate
+          record.status = 'completed'
+          record.endTime = Date.now()
+          record.sellPrice = currentPrice * 0.998
+        }
+        
+        // 更新统计
+        stats.successfulTrades++
+        stats.totalProfit += profitResult.profit
+        
+        tradingStatus.state = 'DONE'
+        await saveData()
+        return
+      } catch (error) {
+        console.error('❌ 止损执行失败:', error)
+        // 即使失败也继续尝试正常挂单
+      }
+    }
+    
     // 重新分析市场，获取卖出价
     const result = await findBestTradingSymbol(
       [tradingStatus.symbol],
@@ -740,6 +943,63 @@ async function handleSellOrderPlacedState() {
     
     // 检查价格保护机制（防止市价大幅偏离卖单价）
     const currentPrice = await fetchCurrentPrice(tradingStatus.symbol)
+    
+    // ===== 硬止损检查（优先级最高）=====
+    const lossRate = ((currentPrice - tradingStatus.buyOrder.price) / tradingStatus.buyOrder.price) * 100
+    const STOP_LOSS_THRESHOLD = -3 // -3% 硬止损
+    
+    if (lossRate <= STOP_LOSS_THRESHOLD) {
+      console.log(`🛑 触发硬止损！`)
+      console.log(`💡 买入价: ${tradingStatus.buyOrder.price}, 当前价: ${currentPrice}, 亏损: ${lossRate.toFixed(2)}%`)
+      
+      // 取消原卖单
+      try {
+        await cancelOrder(tradingStatus.symbol, tradingStatus.sellOrder.orderId)
+        console.log('✅ 原卖单已取消')
+      } catch (cancelError) {
+        console.error('❌ 取消卖单失败:', cancelError)
+      }
+      
+      // 立即以市价止损
+      try {
+        console.log('⚠️  正在执行市价止损...')
+        await createSellOrder(tradingStatus.symbol, tradingStatus.buyOrder.amount, currentPrice * 0.998) // 略低于市价确保成交
+        console.log('✅ 止损卖单已提交')
+        
+        // 等待3秒确认成交
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        
+        // 计算止损后的亏损
+        const profitResult = calculateProfit(
+          tradingStatus.buyOrder.amount,
+          tradingStatus.buyOrder.price,
+          currentPrice * 0.998
+        )
+        
+        console.log(`📊 止损完成，亏损: ${profitResult.profit.toFixed(2)} USDT (${profitResult.profitRate.toFixed(2)}%)`)
+        
+        // 更新交易记录
+        const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+        if (record) {
+          record.profit = profitResult.profit
+          record.profitRate = profitResult.profitRate
+          record.status = 'completed'
+          record.endTime = Date.now()
+          record.sellPrice = currentPrice * 0.998
+        }
+        
+        // 更新统计
+        stats.successfulTrades++
+        stats.totalProfit += profitResult.profit
+        
+        tradingStatus.state = 'DONE'
+        await saveData()
+        return
+      } catch (error) {
+        console.error('❌ 止损执行失败:', error)
+        // 继续后续检查
+      }
+    }
     
     // 如果当前价格跌破原买入区间的下界，说明市场反转，需要及时止损
     if (tradingStatus.low && currentPrice < tradingStatus.low) {
