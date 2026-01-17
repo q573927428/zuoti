@@ -14,7 +14,7 @@
     "orderTimeout": 3600000
   },
   "stats": {
-    "totalTrades": 1,
+    "totalTrades": 0,
     "successfulTrades": 0,
     "failedTrades": 0,
     "totalProfit": 0,
@@ -22,7 +22,7 @@
     "annualizedReturn": 0,
     "currentDate": "2026-01-18",
     "tradedSymbols": {
-      "BNB/USDT": 1
+      "BNB/USDT": 0
     }
   },
   "lastSaved": 1768667940349
