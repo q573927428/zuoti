@@ -40,7 +40,7 @@
             <el-col :span="4" v-for="currency in ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'SOL']" :key="currency">
               <div class="balance-item">
                 <div class="balance-currency">{{ currency }}</div>
-                <div class="balance-amount">{{ (store.balances[currency]?.free || 0).toFixed(currency === 'USDT' || currency === 'USDC' ? 2 : 8) }}</div>
+                <div class="balance-amount">{{ (store.balances[currency]?.free || 0).toFixed(currency === 'USDT' || currency === 'USDC' ? 2 : 6) }}</div>
               </div>
             </el-col>
           </el-row>
@@ -252,10 +252,16 @@
                   </el-select>
                 </el-form-item>
                 <el-form-item label="价格">
-                  <el-input-number v-model="manualForm.price" :min="0" :precision="8" style="width: 100%"/>
+                  <el-input-number v-model="manualForm.price" :min="0" :precision="6" style="width: 100%"/>
+                  <el-button type="primary" size="small" @click="getSymbolPrices">
+                    获取当前价格
+                  </el-button>
                 </el-form-item>
                 <el-form-item label="数量">
-                  <el-input-number v-model="manualForm.amount" :min="0" :precision="8" style="width: 100%"/>
+                  <el-input-number v-model="manualForm.amount" :min="0" :precision="6" style="width: 100%"/>
+                  <el-tag  type="info" size="small">
+                    USDT余额：{{  (store.balances['USDT']?.free || 0).toFixed(2) }}
+                  </el-tag>
                 </el-form-item>
                 <el-form-item>
                   <el-button type="success" @click="handleManualBuy" :loading="manualLoading">
@@ -398,6 +404,22 @@ const testConnection = async () => {
   }
 }
 
+// 刷新当前价格
+const getSymbolPrices = async () => {
+  try {
+    const symbol = manualForm.value.symbol
+    const response = await $fetch('/api/trading/current-price', {
+      params: { symbol }
+    }) as any
+    
+    if (response.success) {
+      store.updateCurrentPrice(symbol, response.price)
+      manualForm.value.price = response.price
+    }
+  } catch (error) {
+    console.error('刷新当前价格失败:', error)
+  }
+}
 // 手动买入
 const handleManualBuy = async () => {
   if (!manualForm.value.price || !manualForm.value.amount) {
