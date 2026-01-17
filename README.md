@@ -33,8 +33,8 @@ pnpm install
 
 `.env` 文件已配置币安模拟交易API密钥：
 ```bash
-BINANCE_API_KEY=VvwOAZcCoSsqpTjf42mUrFzdjuzat1vVuUhv0XdvyX41tl0zC6rOfbHUcUWGL6YV
-BINANCE_SECRET=CYhzclBL0vlXGZLnIvxx3D0kq4MZCXaxjAwdA5KpsKvIuUivIMOq5ZOPZkFloG6A
+BINANCE_API_KEY=
+BINANCE_SECRET=
 ```
 
 ## 币安模拟交易设置
