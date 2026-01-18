@@ -20,6 +20,26 @@ const CONFIG_PATH = join(DATA_DIR, 'trading-config.json')  // 配置和统计
 const DATA_PATH = join(DATA_DIR, 'trading-data.json')      // 交易记录和状态
 
 /**
+ * 标准时间基准获取函数
+ */
+function getOrderActiveTime(
+  order: any,
+  fallbackCreatedAt: number
+): number {
+  // 有任何成交，用最近一次成交时间
+  if (order?.filled && order.filled > 0) {
+    return (
+      order.lastTradeTimestamp ??
+      order.timestamp ??
+      fallbackCreatedAt
+    )
+  }
+
+  // 从未成交，用下单时间
+  return order?.timestamp ?? fallbackCreatedAt
+}
+
+/**
  * 加载持久化数据
  */
 async function loadData() {
@@ -618,7 +638,11 @@ async function handleBuyOrderPlacedState() {
     }
     
     // 1. 检查订单是否已完全成交
-    if (orderStatus.status === 'closed') {
+    const isFullyFilled =
+      orderStatus.filled &&
+      orderStatus.amount &&
+      orderStatus.filled >= orderStatus.amount
+    if (orderStatus.status === 'closed' || isFullyFilled) {
       console.log(`✅ 买单已完全成交: ${tradingStatus.symbol}`)
       
       // 更新实际成交数量和价格（使用实际成交数据）
@@ -707,7 +731,16 @@ async function handleBuyOrderPlacedState() {
     }
     
     // 检查超时
-    const isTimeout = checkOrderTimeout(tradingStatus.buyOrder.createdAt, tradingConfig.orderTimeout)
+    const activeTime = getOrderActiveTime(
+      orderStatus, // fetchOrderStatus 返回的订单对象
+      tradingStatus.buyOrder.createdAt
+    )
+    
+    const isTimeout = checkOrderTimeout(
+      activeTime,
+      tradingConfig.orderTimeout
+    )
+    
     if (isTimeout) {
       console.log(`⏱️  买单超时 (${tradingConfig.orderTimeout / 1000}秒)，准备取消订单`)
       
@@ -881,7 +914,11 @@ async function handleSellOrderPlacedState() {
     }
     
     // 1. 检查订单是否已完全成交
-    if (orderStatus.status === 'closed') {
+    const isFullyFilled =
+      orderStatus.filled &&
+      orderStatus.amount &&
+      orderStatus.filled >= orderStatus.amount
+    if (orderStatus.status === 'closed' || isFullyFilled) {
       console.log(`✅ 卖单已完全成交: ${tradingStatus.symbol}`)
       
       // 使用实际成交价格计算收益
@@ -1046,7 +1083,16 @@ async function handleSellOrderPlacedState() {
     }
     
     // 检查超时
-    const isTimeout = checkOrderTimeout(tradingStatus.sellOrder.createdAt, tradingConfig.orderTimeout)
+    const activeTime = getOrderActiveTime(
+      orderStatus, // fetchOrderStatus 返回的订单对象
+      tradingStatus.sellOrder.createdAt
+    )
+    
+    const isTimeout = checkOrderTimeout(
+      activeTime,
+      tradingConfig.orderTimeout
+    )
+    
     if (isTimeout) {
       console.log(`⏱️  卖单超时 (${tradingConfig.orderTimeout / 1000}秒)，准备取消订单`)
       
