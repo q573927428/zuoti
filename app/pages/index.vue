@@ -271,8 +271,31 @@
             </el-table-column>
             <el-table-column label="状态">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'completed' ? 'success' : row.status === 'failed' ? 'danger' : 'warning'">
-                  {{ row.status === 'completed' ? '已完成' : row.status === 'failed' ? '失败' : '进行中' }}
+                <el-tooltip
+                  v-if="row.status === 'failed' && row.failureReason"
+                  :content="row.failureReason"
+                  placement="top"
+                >
+                  <el-tag type="danger">
+                    失败
+                  </el-tag>
+                </el-tooltip>
+
+                <el-tag
+                  v-else
+                  :type="row.status === 'completed'
+                    ? 'success'
+                    : row.status === 'failed'
+                      ? 'danger'
+                      : 'warning'"
+                >
+                  {{
+                    row.status === 'completed'
+                      ? '已完成'
+                      : row.status === 'failed'
+                        ? '失败'
+                        : '进行中'
+                  }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -405,7 +428,6 @@
                 :precision="2"
                 @change="handleConfigChange"
               />
-              <el-text size="small" type="info">买卖价格距离边界的比例(默认0.12)</el-text>
             </el-form-item>
           </el-form>
         </el-card>

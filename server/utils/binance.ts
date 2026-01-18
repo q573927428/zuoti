@@ -119,7 +119,7 @@ export async function createBuyOrder(
   try {
     const binance = getPrivateBinanceInstance()
     const order = await binance.createLimitBuyOrder(symbol, amount, price)
-    console.log(`创建买单成功: ${symbol} 数量:${amount} 价格:${price}`, order)
+    console.log(`创建买单成功: ${symbol} 数量:${amount} 价格:${price}`)
     return order
   } catch (error) {
     console.error(`创建买单失败: ${symbol}`, error)
@@ -138,7 +138,7 @@ export async function createSellOrder(
   try {
     const binance = getPrivateBinanceInstance()
     const order = await binance.createLimitSellOrder(symbol, amount, price)
-    console.log(`创建卖单成功: ${symbol} 数量:${amount} 价格:${price}`, order)
+    console.log(`创建卖单成功: ${symbol} 数量:${amount} 价格:${price}`)
     return order
   } catch (error) {
     console.error(`创建卖单失败: ${symbol}`, error)
@@ -167,7 +167,7 @@ export async function cancelOrder(symbol: TradingSymbol, orderId: string): Promi
   try {
     const binance = getPrivateBinanceInstance()
     const result = await binance.cancelOrder(orderId, symbol)
-    console.log(`取消订单成功: ${orderId}`, result)
+    console.log(`取消订单成功: ${orderId}`)
     return result
   } catch (error) {
     console.error(`取消订单失败: ${orderId}`, error)

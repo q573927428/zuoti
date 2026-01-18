@@ -320,6 +320,7 @@ export class StateHandlers {
     if (record) {
       record.status = 'failed'
       record.endTime = Date.now()
+      record.failureReason = '买单被取消'
     }
     stats.failedTrades++
     
@@ -344,7 +345,7 @@ export class StateHandlers {
     // 检查保护机制
     if (protection.needProtection) {
       console.log(`⚠️  触发保护机制: ${protection.reason}`)
-      return await this.cancelBuyOrder(tradingStatus, orderStatus, tradeRecords, stats)
+      return await this.cancelBuyOrder(tradingStatus, orderStatus, tradeRecords, stats, protection.reason)
     }
     
     // 检查超时
@@ -354,7 +355,7 @@ export class StateHandlers {
     
     if (isTimeout) {
       console.log(`⏱️  买单超时 (${buyTimeout / 1000}秒)，准备取消订单`)
-      return await this.cancelBuyOrder(tradingStatus, orderStatus, tradeRecords, stats)
+      return await this.cancelBuyOrder(tradingStatus, orderStatus, tradeRecords, stats, '买单超时')
     }
     
     console.log(`⏳ 买单等待成交中: ${tradingStatus.symbol} ${orderStatus.filled || 0}/${orderStatus.amount}`)
@@ -368,7 +369,8 @@ export class StateHandlers {
     tradingStatus: TradingStatus,
     orderStatus: any,
     tradeRecords: TradeRecord[],
-    stats: SystemStats
+    stats: SystemStats,
+    failureReason?: string
   ): Promise<TradingStatus> {
     try {
       await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.buyOrder!.orderId)
@@ -385,8 +387,19 @@ export class StateHandlers {
       return tradingStatus
     }
     
-    // 完全未成交
-    return this.handleBuyOrderCanceled(tradingStatus, tradeRecords, stats)
+    // 完全未成交，更新失败原因
+    const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+    if (record) {
+      record.status = 'failed'
+      record.endTime = Date.now()
+      record.failureReason = failureReason || '买单被取消'
+    }
+    stats.failedTrades++
+    
+    return {
+      state: 'IDLE',
+      lastUpdateTime: Date.now(),
+    }
   }
   
   /**
@@ -632,7 +645,15 @@ export class StateHandlers {
       return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined }
     }
     
-    // 完全未成交
+    // 完全未成交，记录失败原因
+    const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+    if (record) {
+      record.status = 'failed'
+      record.endTime = Date.now()
+      record.failureReason = '卖单超时'
+    }
+    stats.failedTrades++
+    
     return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined }
   }
   

@@ -1,7 +1,7 @@
 {
   "config": {
     "isTestnet": false,
-    "isAutoTrading": true,
+    "isAutoTrading": false,
     "symbols": [
       "ETH/USDT",
       "BTC/USDT",
@@ -9,7 +9,7 @@
       "SOL/USDT"
     ],
     "investmentAmount": 20,
-    "amplitudeThreshold": 0.5,
+    "amplitudeThreshold": 1,
     "trendThreshold": 5,
     "orderTimeout": {
       "default": 7200000,
@@ -45,15 +45,13 @@
   },
   "stats": {
     "totalTrades": 1,
-    "successfulTrades": 0,
+    "successfulTrades": 1,
     "failedTrades": 1,
-    "totalProfit": 0,
+    "totalProfit": 0.05,
     "totalProfitRate": 0,
     "annualizedReturn": 0,
-    "currentDate": "2026-01-18",
-    "tradedSymbols": {
-      "ETH/USDT": 1
-    }
+    "currentDate": "2026-01-19",
+    "tradedSymbols": {}
   },
-  "lastSaved": 1768743919966
+  "lastSaved": 1768752021784
 }

@@ -52,6 +52,7 @@ export interface TradeRecord {
   startTime: number
   endTime?: number
   status: 'in_progress' | 'completed' | 'failed'
+  failureReason?: string // 交易失败原因
 }
 
 // 交易状态

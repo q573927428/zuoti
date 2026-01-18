@@ -118,7 +118,7 @@ export class DailyResetHandler {
       await this.forceSell(tradingStatus.symbol, orderStatus.filled, tradingStatus.buyOrder.price, tradeRecords, stats, tradingStatus.currentTradeId)
     } else {
       // 标记交易为失败
-      this.markTradeFailed(tradeRecords, tradingStatus.currentTradeId)
+      this.markTradeFailed(tradeRecords, tradingStatus.currentTradeId, '日切强制取消')
       stats.failedTrades++
     }
   }
@@ -215,7 +215,7 @@ export class DailyResetHandler {
       stats.totalProfit += profitResult.profit
     } catch (error) {
       console.error('❌ 日切强平失败:', error)
-      this.markTradeFailed(tradeRecords, tradeId)
+      this.markTradeFailed(tradeRecords, tradeId, '日切强平失败')
       stats.failedTrades++
     }
   }
@@ -240,7 +240,10 @@ export class DailyResetHandler {
   /**
    * 标记交易失败
    */
-  private markTradeFailed(tradeRecords: TradeRecord[], tradeId: string | undefined) {
-    this.updateTradeRecord(tradeRecords, tradeId, { status: 'failed' })
+  private markTradeFailed(tradeRecords: TradeRecord[], tradeId: string | undefined, failureReason?: string) {
+    this.updateTradeRecord(tradeRecords, tradeId, { 
+      status: 'failed',
+      failureReason: failureReason || '日切强制取消'
+    })
   }
 }
