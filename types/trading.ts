@@ -66,6 +66,48 @@ export interface TradingStatus {
   lastUpdateTime: number
 }
 
+// 订单超时配置
+export interface OrderTimeoutConfig {
+  default: number // 默认超时（毫秒）
+  buy?: number // 买单超时
+  sell?: number // 卖单超时
+  bySymbol?: Record<TradingSymbol, number> // 按交易对自定义
+}
+
+// 熔断机制配置
+export interface CircuitBreakerConfig {
+  enabled: boolean // 是否启用熔断
+  consecutiveFailures: number // 连续失败次数阈值
+  dailyLossLimit: number // 单日亏损限额（USDT）
+  totalLossLimit: number // 总亏损限额（USDT）
+  cooldownPeriod: number // 熔断后冷却时间（毫秒）
+  priceVolatilityThreshold: number // 价格波动阈值（%）
+}
+
+// 日切配置
+export interface DailyResetConfig {
+  processingTime: string // 日切处理时间 "HH:mm"
+  warningTime: string // 日切预警时间 "HH:mm"
+  forceLiquidationDiscount: number // 强平价格折扣
+}
+
+// 止损配置
+export interface StopLossConfig {
+  enabled: boolean // 是否启用止损
+  threshold: number // 止损阈值（%，负数）
+  executionDiscount: number // 执行价格折扣
+  waitTime: number // 等待确认时间（毫秒）
+}
+
+// 交易参数配置
+export interface TradingParametersConfig {
+  priceDeviationThreshold: number // 价格偏离阈值（%）
+  partialFillThreshold: number // 部分成交判定阈值（0-1）
+  balanceSafetyBuffer: number // 余额安全缓冲（0-1）
+  marketOrderDiscount: number // 市价单价格折扣
+  priceRangeRatio: number // 买入/卖出价格距离边界的比例（0-1，默认0.12）
+}
+
 // 系统配置
 export interface SystemConfig {
   isTestnet: boolean // 是否使用模拟交易
@@ -74,7 +116,11 @@ export interface SystemConfig {
   investmentAmount: number // 每次投资金额（USDT）
   amplitudeThreshold: number // 振幅阈值
   trendThreshold: number // 趋势过滤阈值
-  orderTimeout: number // 订单超时时间（毫秒）
+  orderTimeout: OrderTimeoutConfig // 订单超时配置
+  circuitBreaker: CircuitBreakerConfig // 熔断机制配置
+  dailyReset: DailyResetConfig // 日切配置
+  stopLoss: StopLossConfig // 止损配置
+  trading: TradingParametersConfig // 交易参数配置
 }
 
 // 系统统计

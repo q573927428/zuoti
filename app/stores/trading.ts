@@ -13,13 +13,51 @@ export const useTradingStore = defineStore('trading', {
   state: () => ({
     // 系统配置
     config: {
-      isTestnet: false,
-      isAutoTrading: false,
+      isTestnet: false,         // 是否使用币安测试网
+      isAutoTrading: false,     // 是否开启自动交易主开关
       symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT'] as TradingSymbol[],
-      investmentAmount: 100,
-      amplitudeThreshold: 0.5, // 降低振幅阈值，更容易触发交易
-      trendThreshold: 5.0,
-      orderTimeout: 60 * 60 * 1000, // 1小时
+      investmentAmount: 20,    // 单次交易的投入金额（USDT
+      amplitudeThreshold: 0.5,   // 价格振幅阈值（%）
+      trendThreshold: 5.0,       // 趋势强度阈值（%）
+
+      // 订单超时配置
+      orderTimeout: {
+        default: 120 * 60 * 1000, // 2小时
+      },
+
+      // 熔断机制配置
+      circuitBreaker: {
+        enabled: true,
+        consecutiveFailures: 5,             // 连续失败5次触发
+        dailyLossLimit: 20,                 // 单日亏损20 USDT
+        totalLossLimit: 100,                // 总亏损100 USDT
+        cooldownPeriod: 12 * 60 * 60 * 1000, // 12小时
+        priceVolatilityThreshold: 10,        // 价格波动10%
+      },
+
+      // 日切配置
+      dailyReset: {
+        processingTime: '23:59',            // 23:00开始日切处理
+        warningTime: '23:30',               // 22:30开始预警
+        forceLiquidationDiscount: 0.999,    // 强平价格折扣
+      },
+
+      // 止损配置
+      stopLoss: {
+        enabled: true,
+        threshold: -2,                       // -2%止损
+        executionDiscount: 0.998,            // 执行价格折扣
+        waitTime: 5 * 1000,                  // 等待5秒
+      },
+
+      // 交易参数配置
+      trading: {
+        priceDeviationThreshold: 0.5,
+        partialFillThreshold: 0.9,
+        balanceSafetyBuffer: 0.05,
+        marketOrderDiscount: 0.999,
+        priceRangeRatio: 0.12, // 买入/卖出价格距离边界12%
+      },
     } as SystemConfig,
 
     // 交易状态
@@ -54,6 +92,19 @@ export const useTradingStore = defineStore('trading', {
 
     // 调试日志
     debugLogs: [] as string[],
+
+    // 熔断器状态
+    circuitBreakerState: {
+      isTripped: false,
+      consecutiveFailures: 0,
+      dailyLoss: 0,
+    } as {
+      isTripped: boolean
+      trippedAt?: number
+      reason?: string
+      consecutiveFailures: number
+      dailyLoss: number
+    },
   }),
 
   getters: {
@@ -291,7 +342,17 @@ export const useTradingStore = defineStore('trading', {
           if (data.tradeRecords) this.tradeRecords = data.tradeRecords
           if (data.stats) this.stats = data.stats
           if (data.tradingStatus) this.tradingStatus = data.tradingStatus
-          if (data.config) this.config = { ...this.config, ...data.config }
+          if (data.config) {
+            // 深度合并配置，确保新字段有默认值
+            this.config = {
+              ...this.config,
+              ...data.config,
+              trading: {
+                ...this.config.trading,
+                ...(data.config.trading || {}),
+              },
+            }
+          }
         }
       } catch (error) {
         console.error('加载持久化数据失败:', error)
@@ -312,6 +373,53 @@ export const useTradingStore = defineStore('trading', {
         })
       } catch (error) {
         console.error('保存持久化数据失败:', error)
+      }
+    },
+
+    // 获取熔断器状态
+    async fetchCircuitBreakerState() {
+      try {
+        const response = await $fetch('/api/trading/circuit-breaker/status') as any
+        if (response.success) {
+          this.circuitBreakerState = response.data
+        }
+      } catch (error: any) {
+        console.error('获取熔断器状态失败:', error)
+      }
+    },
+
+    // 重置熔断器
+    async resetCircuitBreaker() {
+      try {
+        const response = await $fetch('/api/trading/circuit-breaker/reset', {
+          method: 'POST'
+        }) as any
+        if (response.success) {
+          this.addDebugLog('熔断器已重置')
+          await this.fetchCircuitBreakerState()
+          return { success: true, message: response.message }
+        }
+      } catch (error: any) {
+        this.addDebugLog(`重置熔断器失败: ${error.message}`)
+        throw error
+      }
+    },
+
+    // 切换自动交易
+    async toggleAutoTrading(enabled: boolean) {
+      try {
+        const response = await $fetch('/api/trading/bot/toggle', {
+          method: 'POST',
+          body: { enabled }
+        }) as any
+        if (response.success) {
+          this.config.isAutoTrading = enabled
+          this.addDebugLog(`自动交易已${enabled ? '开启' : '关闭'}`)
+          return { success: true, message: response.message }
+        }
+      } catch (error: any) {
+        this.addDebugLog(`切换自动交易失败: ${error.message}`)
+        throw error
       }
     },
   },

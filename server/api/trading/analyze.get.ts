@@ -7,11 +7,13 @@ export default defineEventHandler(async (event) => {
     const symbols = (query.symbols as string)?.split(',') as TradingSymbol[] || ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT']
     const amplitudeThreshold = Number(query.amplitudeThreshold) || 5.0
     const trendThreshold = Number(query.trendThreshold) || 5.0
+    const priceRangeRatio = Number(query.priceRangeRatio) || 0.12
     
     const result = await findBestTradingSymbol(
       symbols,
       amplitudeThreshold,
-      trendThreshold
+      trendThreshold,
+      priceRangeRatio
     )
     
     return result

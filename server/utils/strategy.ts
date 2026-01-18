@@ -7,7 +7,8 @@ import { fetchKlines } from './binance'
 export async function analyzeAmplitude(
   symbol: TradingSymbol,
   amplitudeThreshold: number = 0.5,
-  trendThreshold: number = 5.0
+  trendThreshold: number = 5.0,
+  priceRangeRatio: number = 0.12
 ): Promise<AmplitudeAnalysis> {
   try {
     // 获取最近6小时（24根15分钟K线）
@@ -35,9 +36,9 @@ export async function analyzeAmplitude(
     // 计算Range
     const range = high - low
     
-    // 计算建议的买入价和卖出价
-    const buyPrice = low + 0.12 * range
-    const sellPrice = high - 0.12 * range
+    // 计算建议的买入价和卖出价（使用配置的比例）
+    const buyPrice = low + priceRangeRatio * range
+    const sellPrice = high - priceRangeRatio * range
     
     return {
       symbol,
@@ -61,12 +62,13 @@ export async function analyzeAmplitude(
 export async function findBestTradingSymbol(
   symbols: TradingSymbol[],
   amplitudeThreshold: number = 0.5,
-  trendThreshold: number = 5.0
+  trendThreshold: number = 5.0,
+  priceRangeRatio: number = 0.12
 ): Promise<{ bestSymbol: AmplitudeAnalysis | null; allAnalyses: AmplitudeAnalysis[] }> {
   try {
     // 分析所有交易对
     const analyses = await Promise.all(
-      symbols.map(symbol => analyzeAmplitude(symbol, amplitudeThreshold, trendThreshold))
+      symbols.map(symbol => analyzeAmplitude(symbol, amplitudeThreshold, trendThreshold, priceRangeRatio))
     )
     
     // 过滤出符合条件的交易对：振幅超过阈值且不在单边趋势中

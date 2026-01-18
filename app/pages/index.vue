@@ -86,6 +86,54 @@
           </el-col>
         </el-row>
 
+        <!-- 熔断器状态 -->
+        <el-card shadow="hover" class="status-card">
+          <template #header>
+            <div class="card-header">
+              <span>熔断器状态</span>
+              <div>
+                <el-tag 
+                  :type="store.circuitBreakerState.isTripped ? 'danger' : 'success'" 
+                  size="large"
+                >
+                  {{ store.circuitBreakerState.isTripped ? '🔒 已熔断' : '✅ 正常' }}
+                </el-tag>
+                <el-button 
+                  v-if="store.circuitBreakerState.isTripped"
+                  type="warning" 
+                  size="small" 
+                  @click="handleResetCircuitBreaker"
+                  :loading="resettingCircuitBreaker"
+                >
+                  重置熔断器
+                </el-button>
+              </div>
+            </div>
+          </template>
+          <el-descriptions :column="3" border>
+            <el-descriptions-item label="连续失败次数">
+              <el-tag :type="store.circuitBreakerState.consecutiveFailures > 0 ? 'warning' : 'success'">
+                {{ store.circuitBreakerState.consecutiveFailures }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="当日亏损(USDT)">
+              <span :class="store.circuitBreakerState.dailyLoss < 0 ? 'text-danger' : 'text-success'">
+                {{ store.circuitBreakerState.dailyLoss.toFixed(2) }}
+              </span>
+            </el-descriptions-item>
+            <el-descriptions-item label="熔断限额">
+              连续失败: {{ store.config.circuitBreaker.consecutiveFailures }}次<br/>
+              日亏损: {{ store.config.circuitBreaker.dailyLossLimit }} USDT
+            </el-descriptions-item>
+            <el-descriptions-item v-if="store.circuitBreakerState.isTripped && store.circuitBreakerState.trippedAt" label="熔断时间" :span="2">
+              {{ new Date(store.circuitBreakerState.trippedAt).toLocaleString() }}
+            </el-descriptions-item>
+            <el-descriptions-item v-if="store.circuitBreakerState.reason" label="熔断原因" :span="3">
+              <el-tag type="danger">{{ store.circuitBreakerState.reason }}</el-tag>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-card>
+
         <!-- 交易状态 -->
         <el-card shadow="hover" class="status-card">
           <template #header>
@@ -194,17 +242,17 @@
             <el-table-column prop="symbol" label="交易对" width="120" />
             <el-table-column label="买入价" width="120">
               <template #default="{ row }">
-                {{ row.buyPrice?.toFixed(8) }}
+                {{ row.buyPrice?.toFixed(5) }}
               </template>
             </el-table-column>
             <el-table-column label="卖出价">
               <template #default="{ row }">
-                {{ row.sellPrice?.toFixed(8) || '-' }}
+                {{ row.sellPrice?.toFixed(5) || '-' }}
               </template>
             </el-table-column>
             <el-table-column label="数量">
               <template #default="{ row }">
-                {{ row.amount?.toFixed(8) }}
+                {{ row.amount?.toFixed(5) }}
               </template>
             </el-table-column>
             <el-table-column label="收益(USDT)">
@@ -348,6 +396,17 @@
                 @change="handleConfigChange"
               />
             </el-form-item>
+            <el-form-item label="价格区间比例">
+              <el-input-number 
+                v-model="store.config.trading.priceRangeRatio" 
+                :min="0.05" 
+                :max="0.5" 
+                :step="0.01"
+                :precision="2"
+                @change="handleConfigChange"
+              />
+              <el-text size="small" type="info">买卖价格距离边界的比例(默认0.12)</el-text>
+            </el-form-item>
           </el-form>
         </el-card>
       </el-main>
@@ -363,6 +422,7 @@ const loading = ref(false)
 const testing = ref(false)
 const loadingBalance = ref(false)
 const manualLoading = ref(false)
+const resettingCircuitBreaker = ref(false)
 
 // 手动交易表单
 const manualForm = ref({
@@ -376,12 +436,14 @@ onMounted(async () => {
   await store.loadPersistedData()
   await refreshBalance()
   await refreshAnalysis()
+  await store.fetchCircuitBreakerState()
   
   // 定时刷新数据 - 增加刷新频率
   setInterval(async () => {
     await refreshAnalysis()
     await refreshBalance()
     await store.loadPersistedData() // 同时刷新交易状态和记录
+    await store.fetchCircuitBreakerState() // 刷新熔断器状态
   }, 10000) // 改为每10秒刷新一次，保持数据实时
 })
 
@@ -475,6 +537,7 @@ const refreshAnalysis = async () => {
         symbols: store.config.symbols.join(','),
         amplitudeThreshold: store.config.amplitudeThreshold,
         trendThreshold: store.config.trendThreshold,
+        priceRangeRatio: store.config.trading.priceRangeRatio,
         tradedSymbols: JSON.stringify(store.stats.tradedSymbols),
       }
     }) as any
@@ -509,7 +572,29 @@ const refreshCurrentPrices = async () => {
 
 // 处理自动交易开关变化
 const handleAutoTradingChange = async () => {
-  await store.savePersistedData()
+  try {
+    await store.toggleAutoTrading(store.config.isAutoTrading)
+    ElMessage.success(`自动交易已${store.config.isAutoTrading ? '开启' : '关闭'}`)
+  } catch (error: any) {
+    ElMessage.error('切换自动交易失败: ' + error.message)
+    // 切换失败，恢复状态
+    store.config.isAutoTrading = !store.config.isAutoTrading
+  }
+}
+
+// 处理重置熔断器
+const handleResetCircuitBreaker = async () => {
+  resettingCircuitBreaker.value = true
+  try {
+    const result = await store.resetCircuitBreaker()
+    if (result && result.success) {
+      ElMessage.success(result.message || '熔断器已重置')
+    }
+  } catch (error: any) {
+    ElMessage.error('重置熔断器失败: ' + error.message)
+  } finally {
+    resettingCircuitBreaker.value = false
+  }
 }
 
 // 处理配置变化
