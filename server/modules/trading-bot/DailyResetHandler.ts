@@ -2,6 +2,7 @@ import type { TradingStatus, TradeRecord, SystemStats, SystemConfig } from '../.
 import { getCurrentDate } from '../../utils/date'
 import { OrderManager } from './OrderManager'
 import { calculateProfit } from '../../utils/strategy'
+import { fetchBalance } from '../../utils/binance'
 
 /**
  * 日切处理器 - 负责日期变更时的状态重置和强制平仓
@@ -99,17 +100,63 @@ export class DailyResetHandler {
     
     console.log('🔄 处理未成交买单...')
     
-    const orderStatus = await this.orderManager.getOrderStatus(
-      tradingStatus.symbol,
-      tradingStatus.buyOrder.orderId
-    )
+    // 先查询订单真实状态
+    let orderStatus
+    try {
+      orderStatus = await this.orderManager.getOrderStatus(
+        tradingStatus.symbol,
+        tradingStatus.buyOrder.orderId
+      )
+      console.log(`📊 买单真实状态: ${orderStatus.status}, 已成交: ${orderStatus.filled || 0}/${orderStatus.amount}`)
+    } catch (error: any) {
+      if (error.message?.includes('OrderNotFound') || error.code === -2011) {
+        console.log('⚠️  订单不存在，可能已完全成交或已被取消')
+        // 查询账户余额确认是否有币
+        const hasPosition = await this.checkHasPosition(tradingStatus.symbol, tradingStatus.buyOrder.amount)
+        if (hasPosition) {
+          console.log('✅ 检测到持仓，订单已成交，立即市价强平')
+          await this.forceSell(
+            tradingStatus.symbol,
+            tradingStatus.buyOrder.amount,
+            tradingStatus.buyOrder.price,
+            tradeRecords,
+            stats,
+            tradingStatus.currentTradeId
+          )
+        } else {
+          console.log('❌ 无持仓，标记交易失败')
+          this.markTradeFailed(tradeRecords, tradingStatus.currentTradeId, '日切时订单不存在且无持仓')
+          stats.failedTrades++
+        }
+        return
+      }
+      throw error
+    }
     
-    // 取消订单
+    // 检查订单是否已完全成交
+    if (this.orderManager.isFullyFilled(orderStatus)) {
+      console.log('✅ 买单已完全成交，立即市价强平')
+      await this.forceSell(
+        tradingStatus.symbol,
+        orderStatus.filled || tradingStatus.buyOrder.amount,
+        tradingStatus.buyOrder.price,
+        tradeRecords,
+        stats,
+        tradingStatus.currentTradeId
+      )
+      return
+    }
+    
+    // 订单还在挂单中，尝试取消
     try {
       await this.orderManager.cancel(tradingStatus.symbol, tradingStatus.buyOrder.orderId)
       console.log('✅ 买单已取消')
-    } catch (error) {
-      console.error('❌ 取消买单失败:', error)
+    } catch (error: any) {
+      if (error.message?.includes('OrderNotFound') || error.code === -2011) {
+        console.log('⚠️  取消时订单已不存在，可能已成交')
+      } else {
+        console.error('❌ 取消买单失败:', error)
+      }
     }
     
     // 如果有部分成交，需要立即市价卖出
@@ -120,6 +167,25 @@ export class DailyResetHandler {
       // 标记交易为失败
       this.markTradeFailed(tradeRecords, tradingStatus.currentTradeId, '日切强制取消')
       stats.failedTrades++
+    }
+  }
+  
+  /**
+   * 检查是否有持仓
+   */
+  private async checkHasPosition(symbol: string, expectedAmount: number): Promise<boolean> {
+    try {
+      const balance = await fetchBalance()
+      const asset = symbol.replace('/USDT', '')
+      const actualAmount = balance.free?.[asset] || 0
+      
+      console.log(`💰 ${asset} 余额: ${actualAmount}, 期望: ${expectedAmount}`)
+      
+      // 允许一定误差（0.1%）
+      return actualAmount >= expectedAmount * 0.999
+    } catch (error) {
+      console.error('查询余额失败:', error)
+      return false
     }
   }
   

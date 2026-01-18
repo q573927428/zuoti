@@ -117,9 +117,6 @@ export class TradingBot {
     this.isTrading = true
     
     try {
-      // 重新加载配置
-      await this.loadData()
-      
       // 检查日期
       await this.checkAndResetDaily()
       
@@ -167,6 +164,9 @@ export class TradingBot {
    * 处理当前状态
    */
   private async processCurrentState() {
+    const previousState = this.tradingStatus.state
+    const previousJson = JSON.stringify(this.tradingStatus)
+    
     let newStatus: TradingStatus = this.tradingStatus
     
     switch (this.tradingStatus.state) {
@@ -211,9 +211,13 @@ export class TradingBot {
         break
     }
     
-    // 更新状态
-    if (newStatus !== this.tradingStatus) {
-      this.tradingStatus = newStatus
+    // 更新状态并保存
+    this.tradingStatus = newStatus
+    const currentJson = JSON.stringify(this.tradingStatus)
+    
+    // 检查状态是否有变化（通过深度比较）
+    if (previousJson !== currentJson || previousState !== this.tradingStatus.state) {
+      console.log(`💾 状态变更: ${previousState} -> ${this.tradingStatus.state}`)
       await this.saveData()
     }
   }
