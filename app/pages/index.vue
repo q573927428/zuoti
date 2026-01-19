@@ -464,7 +464,7 @@ onMounted(async () => {
     await refreshBalance()
     await store.loadPersistedData() // 同时刷新交易状态和记录
     await store.fetchCircuitBreakerState() // 刷新熔断器状态
-  }, 10000) // 改为每10秒刷新一次，保持数据实时
+  }, 30000) // 改为每30秒刷新一次，保持数据实时
 })
 
 // 刷新余额
