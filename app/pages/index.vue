@@ -4,19 +4,13 @@
       <!-- 头部 -->
       <el-header class="header">
         <div class="header-content">
-          <h1>币安自动做T交易系统</h1>
-          <div class="header-actions">
-            <el-tag :type="store.config.isTestnet ? 'warning' : 'danger'" size="large">
-              {{ store.config.isTestnet ? '模拟交易' : '真实交易' }}
-            </el-tag>
-            <el-switch
-              v-model="store.config.isAutoTrading"
-              active-text="开启"
-              inactive-text="交易关闭"
-              size="large"
-              @change="handleAutoTradingChange"
-            />
-          </div>
+          <h1>币安自动做T交易系统
+            <span class="header-actions">
+              <el-tag :type="store.config.isTestnet ? 'warning' : 'danger'" size="large">
+                {{ store.config.isTestnet ? '模拟交易' : '真实交易' }}
+              </el-tag>
+            </span>
+          </h1>
         </div>
       </el-header>
 
@@ -319,41 +313,38 @@
               <span>手动交易</span>
             </div>
           </template>
-          <el-form :model="manualForm" label-width="60px">
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="交易对">
-                  <el-select v-model="manualForm.symbol" placeholder="选择交易对">
-                    <el-option
-                      v-for="symbol in store.config.symbols"
-                      :key="symbol"
-                      :label="symbol"
-                      :value="symbol"
-                    />
-                  </el-select>
-                </el-form-item>
-                <el-form-item label="价格">
-                  <el-input-number v-model="manualForm.price" :min="0" :precision="6" style="width: 100%"/>
-                  <el-button type="primary" size="small" @click="getSymbolPrices">
-                    获取当前价格
-                  </el-button>
-                </el-form-item>
-                <el-form-item label="数量">
-                  <el-input-number v-model="manualForm.amount" :min="0" :precision="6" style="width: 100%"/>
-                  <el-tag  type="info" size="small">
-                    USDT余额：{{  (store.balances['USDT']?.free || 0).toFixed(2) }}
-                  </el-tag>
-                </el-form-item>
-                <el-form-item>
-                  <el-button type="success" @click="handleManualBuy" :loading="manualLoading">
-                    手动买入
-                  </el-button>
-                  <el-button type="danger" @click="handleManualSell" :loading="manualLoading">
-                    手动卖出
-                  </el-button>
-                </el-form-item>
-              </el-col>
-            </el-row>
+          <el-form :model="manualForm" label-width="80px">
+            <el-form-item label="交易对">
+              <el-select v-model="manualForm.symbol" placeholder="选择交易对" style="width: 160px;">
+                <el-option
+                  v-for="symbol in store.config.symbols"
+                  :key="symbol"
+                  :label="symbol"
+                  :value="symbol"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="价格">
+              <el-input-number v-model="manualForm.price" :min="0" :precision="5"/>
+              <el-button type="primary" size="small" @click="getSymbolPrices">
+                获取当前价格
+              </el-button>
+            </el-form-item>
+            <el-form-item label="数量">
+              <el-input-number v-model="manualForm.amount" :min="0" :precision="5"/>
+              <el-tag  type="info" size="small">
+                USDT余额：{{  (store.balances['USDT']?.free || 0).toFixed(2) }}
+              </el-tag>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="success" @click="handleManualBuy" :loading="manualLoading">
+                手动买入
+              </el-button>
+              <el-button type="danger" @click="handleManualSell" :loading="manualLoading">
+                手动卖出
+              </el-button>
+            </el-form-item>
+              
           </el-form>
         </el-card>
 
@@ -384,6 +375,13 @@
           <template #header>
             <div class="card-header">
               <span>系统配置</span>
+              <el-switch
+                v-model="store.config.isAutoTrading"
+                active-text="开启"
+                inactive-text="交易关闭"
+                size="large"
+                @change="handleAutoTradingChange"
+              />
             </div>
           </template>
           <el-form :model="store.config" label-width="150px">
@@ -680,13 +678,12 @@ const getCurrentPrice = (symbol: string) => {
   margin: 0;
   font-size: 24px;
   color: #303133;
+  width: 100%;
 }
 
 .header-actions {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  flex-wrap: wrap;
+  font-size: 12px;
+  float: right;
 }
 
 .main-content {
@@ -705,12 +702,7 @@ const getCurrentPrice = (symbol: string) => {
     font-size: 18px;
     width: 100%;
   }
-  
-  .header-actions {
-    width: 100%;
-    /* justify-content: space-between; */
-    gap: 10px;
-  }
+
   
   .main-content {
     padding: 10px;
@@ -814,13 +806,9 @@ const getCurrentPrice = (symbol: string) => {
 @media (max-width: 480px) {
   .header-content h1 {
     font-size: 16px;
-    width: 100px;
   }
   
-  .header-actions {
-    font-size: 12px;
-  }
-  
+
   .header-actions :deep(.el-switch__label) {
     font-size: 12px;
   }
@@ -862,7 +850,7 @@ const getCurrentPrice = (symbol: string) => {
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: bold;
   color: #303133;
 }

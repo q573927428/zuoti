@@ -485,6 +485,20 @@ export class StateHandlers {
   ): Promise<TradingStatus> {
     try {
       console.log('⚠️  正在执行市价止损...')
+      
+      // 如果存在现有卖单，先取消它以释放余额
+      if (tradingStatus.sellOrder && tradingStatus.state === 'SELL_ORDER_PLACED') {
+        try {
+          console.log('🔄 检测到现有卖单，先取消以释放余额...')
+          await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.sellOrder.orderId)
+          console.log('✅ 现有卖单已取消')
+          // 等待订单取消生效
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        } catch (cancelError) {
+          console.error('⚠️  取消现有卖单失败，但继续尝试止损:', cancelError)
+        }
+      }
+      
       await this.orderManager.createSell(tradingStatus.symbol!, tradingStatus.buyOrder!.amount, currentPrice * 0.998)
       console.log('✅ 止损卖单已提交')
       
@@ -577,10 +591,9 @@ export class StateHandlers {
   ): Promise<TradingStatus> {
     const currentPrice = await this.orderManager.getCurrentPrice(tradingStatus.symbol!)
     
-    // 硬止损检查
+    // 硬止损检查（executeStopLoss 内部已处理订单取消）
     const stopLossResult = await this.checkStopLoss(tradingStatus, tradeRecords, stats)
     if (stopLossResult) {
-      await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.sellOrder!.orderId)
       return stopLossResult
     }
     
