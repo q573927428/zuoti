@@ -1,7 +1,7 @@
 import type { TradingStatus, TradeRecord, SystemStats, SystemConfig, TradingSymbol } from '../../../types/trading'
 import { OrderManager } from './OrderManager'
 import { getCurrentDate, getDateFromTimestamp } from '../../utils/date'
-import { findBestTradingSymbol, calculateBuyAmount, calculateProfit, checkProtection, checkOrderTimeout } from '../../utils/strategy'
+import { findBestTradingSymbol, findBestTradingSymbolMultiTimeframe, calculateBuyAmount, calculateProfit, checkProtection, checkOrderTimeout } from '../../utils/strategy'
 import { fetchBalance, getBinanceInstance } from '../../utils/binance'
 
 /**
@@ -110,22 +110,54 @@ export class StateHandlers {
     
     console.log('🔍 正在分析市场，寻找交易机会...')
     
-    const result = await findBestTradingSymbol(
-      this.config.symbols,
-      this.config.amplitudeThreshold,
-      this.config.trendThreshold,
-      this.config.trading.priceRangeRatio
-    )
+    // 检查是否启用多时间框架
+    let result: any
+    let bestSymbolData: any
+    
+    if (this.config.multiTimeframe.enabled) {
+      console.log('🔍 使用多时间框架分析...')
+      result = await findBestTradingSymbolMultiTimeframe(
+        this.config.symbols,
+        this.config.amplitudeThreshold,
+        this.config.trendThreshold,
+        this.config.trading.priceRangeRatio,
+        this.config.multiTimeframe
+      )
+      
+      if (result.bestSymbol) {
+        const mtf = result.bestSymbol
+        console.log(`✅ 多时间框架确认: ${mtf.symbol}`)
+        console.log(`   - 评分: ${mtf.score}/100`)
+        console.log(`   - 15m: 振幅${mtf.timeframes['15m'].amplitude}%, 趋势${mtf.timeframes['15m'].trend}%`)
+        console.log(`   - 1h:  振幅${mtf.timeframes['1h'].amplitude}%, 趋势${mtf.timeframes['1h'].trend}%`)
+        console.log(`   - 4h:  振幅${mtf.timeframes['4h'].amplitude}%, 趋势${mtf.timeframes['4h'].trend}%`)
+        console.log(`   - 通过: [${mtf.confirmationDetails.passedTimeframes.join(', ')}]`)
+        
+        // 使用15m的价格数据
+        bestSymbolData = mtf.timeframes['15m']
+      }
+    } else {
+      // 使用原有的单时间框架分析
+      result = await findBestTradingSymbol(
+        this.config.symbols,
+        this.config.amplitudeThreshold,
+        this.config.trendThreshold,
+        this.config.trading.priceRangeRatio
+      )
+      
+      if (result.bestSymbol) {
+        bestSymbolData = result.bestSymbol
+        console.log(`✅ 找到交易机会: ${bestSymbolData.symbol}, 振幅: ${bestSymbolData.amplitude}%`)
+      }
+    }
     
     if (!result.bestSymbol) {
       console.log('💤 未找到符合条件的交易机会')
       return tradingStatus
     }
     
-    console.log(`✅ 找到交易机会: ${result.bestSymbol.symbol}, 振幅: ${result.bestSymbol.amplitude}%`)
-    
     // 安全检查和创建买单
-    const newStatus = await this.createBuyOrder(result.bestSymbol, tradeRecords, stats)
+    const newStatus = await this.createBuyOrder(bestSymbolData, tradeRecords, stats)
     return newStatus || tradingStatus
   }
   

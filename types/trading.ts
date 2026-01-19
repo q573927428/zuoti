@@ -25,6 +25,40 @@ export interface AmplitudeAnalysis {
   sellPrice: number // 建议卖出价
 }
 
+// 多时间框架分析结果
+export interface MultiTimeframeAnalysis {
+  symbol: TradingSymbol
+  timeframes: {
+    '15m': AmplitudeAnalysis
+    '1h': AmplitudeAnalysis
+    '4h': AmplitudeAnalysis
+  }
+  score: number // 综合评分（0-100）
+  isValid: boolean // 是否通过多时间框架确认
+  confirmationDetails: {
+    allPass: boolean // 所有时间框架是否都通过
+    passedTimeframes: string[] // 通过的时间框架
+    failedTimeframes: string[] // 未通过的时间框架
+  }
+}
+
+// 多时间框架配置
+export interface MultiTimeframeConfig {
+  enabled: boolean // 是否启用多时间框架确认
+  strictMode: boolean // 严格模式（所有时间框架都要通过）
+  weights: {
+    '15m': number // 15分钟权重
+    '1h': number  // 1小时权重
+    '4h': number  // 4小时权重
+  }
+  scoreThreshold: number // 评分阈值（0-100）
+  lookbackPeriods: {
+    '15m': number // 15分钟查看多少根K线
+    '1h': number  // 1小时查看多少根K线
+    '4h': number  // 4小时查看多少根K线
+  }
+}
+
 // 订单信息
 export interface OrderInfo {
   orderId: string
@@ -124,6 +158,7 @@ export interface SystemConfig {
   trading: TradingParametersConfig // 交易参数配置
   dailyTradeLimit: number // 每日交易次数限制，0表示无限制
   tradeInterval: number // 交易间隔时间（毫秒），0表示无间隔
+  multiTimeframe: MultiTimeframeConfig // 多时间框架配置
 }
 
 // 系统统计

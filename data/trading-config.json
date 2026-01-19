@@ -1,7 +1,7 @@
 {
   "config": {
     "isTestnet": false,
-    "isAutoTrading": true,
+    "isAutoTrading": false,
     "symbols": [
       "ETH/USDT",
       "BTC/USDT",
@@ -42,21 +42,37 @@
       "marketOrderDiscount": 0.999,
       "priceRangeRatio": 0.11
     },
+    "multiTimeframe": {
+      "enabled": true,
+      "strictMode": false,
+      "weights": {
+        "15m": 0.4,
+        "1h": 0.35,
+        "4h": 0.25
+      },
+      "scoreThreshold": 70,
+      "lookbackPeriods": {
+        "15m": 24,
+        "1h": 24,
+        "4h": 24
+      }
+    },
     "dailyTradeLimit": 3,
     "tradeInterval": 3600000
   },
   "stats": {
-    "totalTrades": 8,
+    "totalTrades": 9,
     "successfulTrades": 1,
-    "failedTrades": 7,
+    "failedTrades": 8,
     "totalProfit": 0.05,
     "totalProfitRate": 0,
     "annualizedReturn": 0,
     "currentDate": "2026-01-19",
     "tradedSymbols": {
       "BNB/USDT": 6,
-      "SOL/USDT": 1
+      "SOL/USDT": 1,
+      "ETH/USDT": 1
     }
   },
-  "lastSaved": 1768810900244
+  "lastSaved": 1768820190770
 }

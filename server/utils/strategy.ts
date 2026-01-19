@@ -1,4 +1,4 @@
-import type { TradingSymbol, Kline, AmplitudeAnalysis } from '../../types/trading'
+import type { TradingSymbol, Kline, AmplitudeAnalysis, MultiTimeframeAnalysis, MultiTimeframeConfig } from '../../types/trading'
 import { fetchKlines } from './binance'
 
 /**
@@ -161,4 +161,144 @@ export function checkOrderTimeout(
 ): boolean {
   const now = Date.now()
   return (now - orderCreatedAt) > timeout
+}
+
+/**
+ * 指定时间框架的振幅分析（辅助函数）
+ */
+async function analyzeAmplitudeWithTimeframe(
+  symbol: TradingSymbol,
+  timeframe: '15m' | '1h' | '4h',
+  lookbackPeriods: number,
+  amplitudeThreshold: number,
+  trendThreshold: number,
+  priceRangeRatio: number
+): Promise<AmplitudeAnalysis> {
+  const klines = await fetchKlines(symbol, timeframe, lookbackPeriods)
+  
+  if (klines.length === 0) {
+    throw new Error(`无法获取${symbol}的${timeframe}K线数据`)
+  }
+
+  const high = Math.max(...klines.map(k => k.high))
+  const low = Math.min(...klines.map(k => k.low))
+  const amplitude = ((high - low) / low) * 100
+  
+  const firstClose = klines[0].close
+  const lastClose = klines[klines.length - 1].close
+  const trendPercent = ((lastClose - firstClose) / firstClose) * 100
+  const isTrendFiltered = Math.abs(trendPercent) > trendThreshold
+  
+  const range = high - low
+  const buyPrice = low + priceRangeRatio * range
+  const sellPrice = high - priceRangeRatio * range
+  
+  return {
+    symbol,
+    high,
+    low,
+    amplitude: parseFloat(amplitude.toFixed(2)),
+    trend: parseFloat(trendPercent.toFixed(2)),
+    isTrendFiltered,
+    buyPrice: parseFloat(buyPrice.toFixed(8)),
+    sellPrice: parseFloat(sellPrice.toFixed(8)),
+  }
+}
+
+/**
+ * 多时间框架振幅分析
+ */
+export async function analyzeMultiTimeframe(
+  symbol: TradingSymbol,
+  amplitudeThreshold: number,
+  trendThreshold: number,
+  priceRangeRatio: number,
+  config: MultiTimeframeConfig
+): Promise<MultiTimeframeAnalysis> {
+  // 并行获取三个时间框架的数据
+  const [analysis15m, analysis1h, analysis4h] = await Promise.all([
+    analyzeAmplitudeWithTimeframe(symbol, '15m', config.lookbackPeriods['15m'], amplitudeThreshold, trendThreshold, priceRangeRatio),
+    analyzeAmplitudeWithTimeframe(symbol, '1h', config.lookbackPeriods['1h'], amplitudeThreshold, trendThreshold, priceRangeRatio),
+    analyzeAmplitudeWithTimeframe(symbol, '4h', config.lookbackPeriods['4h'], amplitudeThreshold, trendThreshold, priceRangeRatio)
+  ])
+
+  // 检查各时间框架是否通过
+  const passed15m = !analysis15m.isTrendFiltered && analysis15m.amplitude >= amplitudeThreshold
+  const passed1h = !analysis1h.isTrendFiltered && analysis1h.amplitude >= amplitudeThreshold
+  const passed4h = !analysis4h.isTrendFiltered && analysis4h.amplitude >= amplitudeThreshold
+
+  const passedTimeframes = []
+  const failedTimeframes = []
+  if (passed15m) passedTimeframes.push('15m')
+  else failedTimeframes.push('15m')
+  if (passed1h) passedTimeframes.push('1h')
+  else failedTimeframes.push('1h')
+  if (passed4h) passedTimeframes.push('4h')
+  else failedTimeframes.push('4h')
+
+  const allPass = passed15m && passed1h && passed4h
+
+  // 计算加权评分
+  const score = 
+    (passed15m ? 100 : 0) * config.weights['15m'] +
+    (passed1h ? 100 : 0) * config.weights['1h'] +
+    (passed4h ? 100 : 0) * config.weights['4h']
+
+  // 判断是否有效
+  const isValid = config.strictMode 
+    ? allPass 
+    : score >= config.scoreThreshold
+
+  return {
+    symbol,
+    timeframes: {
+      '15m': analysis15m,
+      '1h': analysis1h,
+      '4h': analysis4h
+    },
+    score: parseFloat(score.toFixed(2)),
+    isValid,
+    confirmationDetails: {
+      allPass,
+      passedTimeframes,
+      failedTimeframes
+    }
+  }
+}
+
+/**
+ * 使用多时间框架分析找出最佳交易对
+ */
+export async function findBestTradingSymbolMultiTimeframe(
+  symbols: TradingSymbol[],
+  amplitudeThreshold: number,
+  trendThreshold: number,
+  priceRangeRatio: number,
+  multiTimeframeConfig: MultiTimeframeConfig
+): Promise<{ 
+  bestSymbol: MultiTimeframeAnalysis | null
+  allAnalyses: MultiTimeframeAnalysis[] 
+}> {
+  // 分析所有交易对
+  const analyses = await Promise.all(
+    symbols.map(symbol => 
+      analyzeMultiTimeframe(symbol, amplitudeThreshold, trendThreshold, priceRangeRatio, multiTimeframeConfig)
+    )
+  )
+  
+  // 过滤出通过多时间框架确认的交易对
+  const validAnalyses = analyses.filter(a => a.isValid)
+  
+  // 按评分排序，选择分数最高的
+  let bestSymbol: MultiTimeframeAnalysis | null = null
+  if (validAnalyses.length > 0) {
+    bestSymbol = validAnalyses.reduce((max, current) => 
+      current.score > max.score ? current : max
+    )
+  }
+  
+  return {
+    bestSymbol,
+    allAnalyses: analyses,
+  }
 }

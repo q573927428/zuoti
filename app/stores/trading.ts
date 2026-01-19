@@ -5,7 +5,8 @@ import type {
   TradeRecord, 
   SystemConfig, 
   SystemStats,
-  AmplitudeAnalysis 
+  AmplitudeAnalysis,
+  MultiTimeframeAnalysis
 } from '../../types/trading'
 import { getCurrentDate, getDateFromTimestamp } from '../utils/date'
 
@@ -59,6 +60,23 @@ export const useTradingStore = defineStore('trading', {
         priceRangeRatio: 0.1 // 买入/卖出价格距离边界10%
       },
 
+      // 多时间框架配置
+      multiTimeframe: {
+        enabled: true,
+        strictMode: false,
+        weights: {
+          '15m': 0.4,
+          '1h': 0.35,
+          '4h': 0.25
+        },
+        scoreThreshold: 70,
+        lookbackPeriods: {
+          '15m': 24,
+          '1h': 24,
+          '4h': 24
+        }
+      },
+
       // 交易次数和间隔配置
       dailyTradeLimit: 3,                    // 每日交易次数限制
       tradeInterval: 60 * 60 * 1000,         // 交易间隔时间（1小时）
@@ -87,6 +105,9 @@ export const useTradingStore = defineStore('trading', {
 
     // 实时振幅分析
     amplitudeAnalyses: [] as AmplitudeAnalysis[],
+    
+    // 多时间框架分析（当启用时使用）
+    multiTimeframeAnalyses: [] as MultiTimeframeAnalysis[],
 
     // 当前价格
     currentPrices: {} as Record<TradingSymbol, number>,
@@ -206,6 +227,11 @@ export const useTradingStore = defineStore('trading', {
     // 更新振幅分析
     updateAmplitudeAnalyses(analyses: AmplitudeAnalysis[]) {
       this.amplitudeAnalyses = analyses
+    },
+
+    // 更新多时间框架分析
+    updateMultiTimeframeAnalyses(analyses: MultiTimeframeAnalysis[]) {
+      this.multiTimeframeAnalyses = analyses
     },
 
     // 更新当前价格

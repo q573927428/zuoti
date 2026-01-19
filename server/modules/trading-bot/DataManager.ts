@@ -63,6 +63,24 @@ export class DataManager {
         marketOrderDiscount: 0.999,
         priceRangeRatio: 0.1, // 买入/卖出价格距离边界10%
       },
+      
+      // 多时间框架配置
+      multiTimeframe: {
+        enabled: true,
+        strictMode: false,
+        weights: {
+          '15m': 0.4,
+          '1h': 0.35,
+          '4h': 0.25
+        },
+        scoreThreshold: 70,
+        lookbackPeriods: {
+          '15m': 24,
+          '1h': 24,
+          '4h': 24
+        }
+      },
+      
       // 交易次数和间隔配置
       dailyTradeLimit: 3,                    // 每日交易次数限制
       tradeInterval: 60 * 60 * 1000,         // 交易间隔时间（1小时）

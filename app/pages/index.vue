@@ -192,7 +192,8 @@
             </div>
           </template>
           <el-table :data="store.amplitudeAnalyses" stripe style="width: 100%">
-            <el-table-column prop="symbol" label="交易对" width="100" />
+            <el-table-column prop="symbol" label="交易对" width="100" fixed />
+            
             <el-table-column label="当前价格">
               <template #default="{ row }">
                 <span style="font-weight: bold; color: #409eff;">
@@ -200,32 +201,124 @@
                 </span>
               </template>
             </el-table-column>
-            <el-table-column label="振幅">
+            
+            <!-- 如果启用多时间框架，显示多时间框架趋势 -->
+            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="多时间框架趋势" width="200">
+              <template #default="{ row }">
+                <div v-if="row.timeframes" style="display: flex; flex-direction: column; gap: 4px; font-size: 12px;">
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #909399; width: 35px; font-weight: bold;">15m:</span>
+                    <el-tag :type="getTrendType(row.timeframes['15m']?.trend)" size="small" style="flex: 1;">
+                      {{ formatTrend(row.timeframes['15m']?.trend) }}
+                    </el-tag>
+                    <span v-if="row.timeframes['15m'] && !row.timeframes['15m'].isTrendFiltered" style="color: #67c23a;">✓</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #909399; width: 35px; font-weight: bold;">1h:</span>
+                    <el-tag :type="getTrendType(row.timeframes['1h']?.trend)" size="small" style="flex: 1;">
+                      {{ formatTrend(row.timeframes['1h']?.trend) }}
+                    </el-tag>
+                    <span v-if="row.timeframes['1h'] && !row.timeframes['1h'].isTrendFiltered" style="color: #67c23a;">✓</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #909399; width: 35px; font-weight: bold;">4h:</span>
+                    <el-tag :type="getTrendType(row.timeframes['4h']?.trend)" size="small" style="flex: 1;">
+                      {{ formatTrend(row.timeframes['4h']?.trend) }}
+                    </el-tag>
+                    <span v-if="row.timeframes['4h'] && !row.timeframes['4h'].isTrendFiltered" style="color: #67c23a;">✓</span>
+                  </div>
+                </div>
+                <span v-else style="color: #909399;">-</span>
+              </template>
+            </el-table-column>
+            
+            <!-- 如果启用多时间框架，显示评分 -->
+            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="评分" >
+              <template #default="{ row }">
+                <div v-if="row.score !== undefined">
+                  <el-progress 
+                    :percentage="row.score" 
+                    :color="getScoreColor(row.score)"
+                    :stroke-width="16"
+                  >
+                    <span style="font-size: 12px; font-weight: bold;">
+                      {{ row.score }}
+                    </span>
+                  </el-progress>
+                </div>
+                <span v-else style="color: #909399;">-</span>
+              </template>
+            </el-table-column>
+            
+            <!-- 如果启用多时间框架，显示确认状态 -->
+            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="确认状态">
+              <template #default="{ row }">
+                <el-tag 
+                  v-if="row.isValid !== undefined"
+                  :type="row.isValid ? 'success' : 'warning'" 
+                  size="small"
+                >
+                  {{ row.isValid ? '✅ 通过' : '❌ 未过' }}
+                </el-tag>
+                <span v-else style="color: #909399;">-</span>
+              </template>
+            </el-table-column>
+            
+            <!-- 单时间框架时显示 -->
+            <el-table-column v-if="!store.config.multiTimeframe?.enabled" label="振幅">
               <template #default="{ row }">
                 <el-tag :type="row.amplitude >= store.config.amplitudeThreshold ? 'success' : 'info'" size="small">
                   {{ row.amplitude }}%
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="趋势">
+            
+            <el-table-column v-if="!store.config.multiTimeframe?.enabled" label="趋势" >
               <template #default="{ row }">
                 <el-tag :type="row.trend > 0 ? 'success' : row.trend < 0 ? 'danger' : 'info'" size="small">
                   {{ row.trend > 0 ? '+' : '' }}{{ row.trend }}%
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="趋势过滤">
+            
+            <el-table-column v-if="!store.config.multiTimeframe?.enabled" label="趋势过滤" width="90">
               <template #default="{ row }">
                 <el-tag :type="row.isTrendFiltered ? 'warning' : 'success'" size="small">
                   {{ row.isTrendFiltered ? '已过滤' : '正常' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="high" label="最高价" />
-            <el-table-column prop="low" label="最低价" />
-            <el-table-column prop="buyPrice" label="建议买入价" />
-            <el-table-column prop="sellPrice" label="建议卖出价" />
-            <el-table-column label="今日交易">
+            
+            <!-- 最高价 - 兼容多时间框架 -->
+            <el-table-column label="最高价">
+              <template #default="{ row }">
+                {{ row.timeframes ? row.timeframes['15m'].high : row.high }}
+              </template>
+            </el-table-column>
+
+            <!-- 最低价 - 兼容多时间框架 -->
+            <el-table-column label="最低价">
+              <template #default="{ row }">
+                {{ row.timeframes ? row.timeframes['15m'].low : row.low }}
+              </template>
+            </el-table-column>
+
+            <!-- 建议买入价 - 兼容多时间框架 -->
+            <el-table-column label="建议买入价">
+              <template #default="{ row }">
+                {{ row.timeframes ? row.timeframes['15m'].buyPrice : row.buyPrice }}
+              </template>
+            </el-table-column>
+
+            <!-- 建议卖出价 - 兼容多时间框架 -->
+            <el-table-column label="建议卖出价">
+              <template #default="{ row }">
+                {{ row.timeframes ? row.timeframes['15m'].sellPrice : row.sellPrice }}
+              </template>
+            </el-table-column>
+
+            
+            <el-table-column label="今日交易" width="80">
               <template #default="{ row }">
                 <el-tag :type="(store.stats.tradedSymbols[row.symbol] ?? 0) > 0 ? 'info' : 'success'" size="small">
                   {{ store.stats.tradedSymbols[row.symbol] ?? 0 }}次
@@ -604,7 +697,12 @@ const handleManualSell = async () => {
 const refreshAnalysis = async () => {
   loading.value = true
   try {
-    const result = await $fetch('/api/trading/analyze', {
+    // 检查是否启用多时间框架
+    const apiPath = store.config.multiTimeframe?.enabled 
+      ? '/api/trading/analyze-mtf'  // 使用多时间框架API
+      : '/api/trading/analyze'       // 使用单时间框架API
+    
+    const result = await $fetch(apiPath, {
       params: {
         symbols: store.config.symbols.join(','),
         amplitudeThreshold: store.config.amplitudeThreshold,
@@ -614,7 +712,14 @@ const refreshAnalysis = async () => {
       }
     }) as any
     
-    store.updateAmplitudeAnalyses(result.allAnalyses)
+    // 根据API类型更新数据
+    if (store.config.multiTimeframe?.enabled) {
+      // 多时间框架数据
+      store.updateAmplitudeAnalyses(result.allAnalyses || [])
+    } else {
+      // 单时间框架数据（保持兼容）
+      store.updateAmplitudeAnalyses(result.allAnalyses || [])
+    }
     
     // 同时获取当前价格
     await refreshCurrentPrices()
@@ -735,6 +840,28 @@ const getTradeIntervalStatus = () => {
     const remainingMinutes = Math.ceil((store.config.tradeInterval - timeSinceLastTrade) / 1000 / 60)
     return `等待 ${remainingMinutes} 分钟`
   }
+}
+
+// 格式化趋势百分比
+const formatTrend = (trend: number | undefined) => {
+  if (trend === undefined) return '-'
+  return `${trend > 0 ? '+' : ''}${trend.toFixed(2)}%`
+}
+
+// 获取趋势标签类型
+const getTrendType = (trend: number | undefined) => {
+  if (trend === undefined) return 'info'
+  if (trend > 2) return 'success'  // 上涨趋势
+  if (trend < -2) return 'danger'  // 下跌趋势
+  return 'info'  // 震荡
+}
+
+// 获取评分颜色
+const getScoreColor = (score: number | undefined) => {
+  if (!score) return '#909399'
+  if (score >= 80) return '#67c23a'  // 绿色
+  if (score >= 60) return '#e6a23c'  // 橙色
+  return '#f56c6c'  // 红色
 }
 </script>
 

@@ -1,20 +1,20 @@
 {
   "tradingStatus": {
     "state": "BUY_ORDER_PLACED",
-    "symbol": "SOL/USDT",
-    "currentTradeId": "trade_1768810900244",
+    "symbol": "ETH/USDT",
+    "currentTradeId": "trade_1768819851153",
     "buyOrder": {
-      "orderId": "16099979190",
-      "symbol": "SOL/USDT",
+      "orderId": "41857468961",
+      "symbol": "ETH/USDT",
       "side": "buy",
-      "price": 132.86,
-      "amount": 0.15,
+      "price": 3191.63,
+      "amount": 0.0062,
       "status": "open",
-      "createdAt": 1768810900244
+      "createdAt": 1768819851153
     },
-    "high": 134.12,
-    "low": 132.71,
-    "lastUpdateTime": 1768810900244
+    "high": 3221.99,
+    "low": 3187.88,
+    "lastUpdateTime": 1768819851153
   },
   "tradeRecords": [
     {
@@ -170,8 +170,19 @@
       "buyPrice": 132.86,
       "amount": 0.15,
       "startTime": 1768810900244,
+      "status": "failed",
+      "endTime": 1768819817215,
+      "failureReason": "买单被取消"
+    },
+    {
+      "id": "trade_1768819851153",
+      "symbol": "ETH/USDT",
+      "buyOrderId": "41857468961",
+      "buyPrice": 3191.63,
+      "amount": 0.0062,
+      "startTime": 1768819851153,
       "status": "in_progress"
     }
   ],
-  "lastSaved": 1768810900245
+  "lastSaved": 1768820190771
 }
