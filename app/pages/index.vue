@@ -203,29 +203,65 @@
             </el-table-column>
             
             <!-- 如果启用多时间框架，显示多时间框架趋势 -->
-            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="多时间框架趋势" width="200">
+            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="多时间框架分析" width="280">
               <template #default="{ row }">
-                <div v-if="row.timeframes" style="display: flex; flex-direction: column; gap: 4px; font-size: 12px;">
+                <div v-if="row.timeframes" style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
                   <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="color: #909399; width: 35px; font-weight: bold;">15m:</span>
-                    <el-tag :type="getTrendType(row.timeframes['15m']?.trend)" size="small" style="flex: 1;">
-                      {{ formatTrend(row.timeframes['15m']?.trend) }}
-                    </el-tag>
-                    <span v-if="row.timeframes['15m'] && !row.timeframes['15m'].isTrendFiltered" style="color: #67c23a;">✓</span>
+                    <span style="color: #909399; width: 30px; font-weight: bold;">15m:</span>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: #606266; font-size: 10px;">振幅:</span>
+                        <el-tag :type="getAmplitudeType(row.timeframes['15m']?.amplitude)" size="small">
+                          {{ formatAmplitude(row.timeframes['15m']?.amplitude) }}
+                        </el-tag>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: #606266; font-size: 10px;">趋势:</span>
+                        <el-tag :type="getTrendType(row.timeframes['15m']?.trend)" size="small">
+                          {{ formatTrend(row.timeframes['15m']?.trend) }}
+                        </el-tag>
+                      </div>
+                    </div>
+                    <span v-if="isTimeframePassed(row.timeframes['15m'])" style="color: #67c23a; font-size: 14px;">✓</span>
+                    <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
                   </div>
                   <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="color: #909399; width: 35px; font-weight: bold;">1h:</span>
-                    <el-tag :type="getTrendType(row.timeframes['1h']?.trend)" size="small" style="flex: 1;">
-                      {{ formatTrend(row.timeframes['1h']?.trend) }}
-                    </el-tag>
-                    <span v-if="row.timeframes['1h'] && !row.timeframes['1h'].isTrendFiltered" style="color: #67c23a;">✓</span>
+                    <span style="color: #909399; width: 30px; font-weight: bold;">1h:</span>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: #606266; font-size: 10px;">振幅:</span>
+                        <el-tag :type="getAmplitudeType(row.timeframes['1h']?.amplitude)" size="small">
+                          {{ formatAmplitude(row.timeframes['1h']?.amplitude) }}
+                        </el-tag>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: #606266; font-size: 10px;">趋势:</span>
+                        <el-tag :type="getTrendType(row.timeframes['1h']?.trend)" size="small">
+                          {{ formatTrend(row.timeframes['1h']?.trend) }}
+                        </el-tag>
+                      </div>
+                    </div>
+                    <span v-if="isTimeframePassed(row.timeframes['1h'])" style="color: #67c23a; font-size: 14px;">✓</span>
+                    <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
                   </div>
                   <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="color: #909399; width: 35px; font-weight: bold;">4h:</span>
-                    <el-tag :type="getTrendType(row.timeframes['4h']?.trend)" size="small" style="flex: 1;">
-                      {{ formatTrend(row.timeframes['4h']?.trend) }}
-                    </el-tag>
-                    <span v-if="row.timeframes['4h'] && !row.timeframes['4h'].isTrendFiltered" style="color: #67c23a;">✓</span>
+                    <span style="color: #909399; width: 30px; font-weight: bold;">4h:</span>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: #606266; font-size: 10px;">振幅:</span>
+                        <el-tag :type="getAmplitudeType(row.timeframes['4h']?.amplitude)" size="small">
+                          {{ formatAmplitude(row.timeframes['4h']?.amplitude) }}
+                        </el-tag>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: #606266; font-size: 10px;">趋势:</span>
+                        <el-tag :type="getTrendType(row.timeframes['4h']?.trend)" size="small">
+                          {{ formatTrend(row.timeframes['4h']?.trend) }}
+                        </el-tag>
+                      </div>
+                    </div>
+                    <span v-if="isTimeframePassed(row.timeframes['4h'])" style="color: #67c23a; font-size: 14px;">✓</span>
+                    <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
                   </div>
                 </div>
                 <span v-else style="color: #909399;">-</span>
@@ -848,12 +884,32 @@ const formatTrend = (trend: number | undefined) => {
   return `${trend > 0 ? '+' : ''}${trend.toFixed(2)}%`
 }
 
+// 格式化振幅百分比
+const formatAmplitude = (amplitude: number | undefined) => {
+  if (amplitude === undefined) return '-'
+  return `${amplitude.toFixed(2)}%`
+}
+
 // 获取趋势标签类型
 const getTrendType = (trend: number | undefined) => {
   if (trend === undefined) return 'info'
   if (trend > 2) return 'success'  // 上涨趋势
   if (trend < -2) return 'danger'  // 下跌趋势
   return 'info'  // 震荡
+}
+
+// 获取振幅标签类型
+const getAmplitudeType = (amplitude: number | undefined) => {
+  if (amplitude === undefined) return 'info'
+  if (amplitude >= store.config.amplitudeThreshold) return 'success'  // 振幅达标
+  return 'warning'  // 振幅不足
+}
+
+// 判断时间框架是否通过
+const isTimeframePassed = (analysis: any) => {
+  if (!analysis) return false
+  // 需要同时满足：振幅达标 && 趋势不被过滤
+  return !analysis.isTrendFiltered && analysis.amplitude >= store.config.amplitudeThreshold
 }
 
 // 获取评分颜色
