@@ -6,9 +6,9 @@ import { fetchKlines } from './binance'
  */
 export async function analyzeAmplitude(
   symbol: TradingSymbol,
-  amplitudeThreshold: number = 0.5,
+  amplitudeThreshold: number = 3,
   trendThreshold: number = 5.0,
-  priceRangeRatio: number = 0.12
+  priceRangeRatio: number = 0.1
 ): Promise<AmplitudeAnalysis> {
   try {
     // 获取最近6小时（24根15分钟K线）
@@ -61,9 +61,9 @@ export async function analyzeAmplitude(
  */
 export async function findBestTradingSymbol(
   symbols: TradingSymbol[],
-  amplitudeThreshold: number = 0.5,
+  amplitudeThreshold: number = 3,
   trendThreshold: number = 5.0,
-  priceRangeRatio: number = 0.12
+  priceRangeRatio: number = 0.1
 ): Promise<{ bestSymbol: AmplitudeAnalysis | null; allAnalyses: AmplitudeAnalysis[] }> {
   try {
     // 分析所有交易对

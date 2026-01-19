@@ -17,7 +17,7 @@ export const useTradingStore = defineStore('trading', {
       isAutoTrading: false,     // 是否开启自动交易主开关
       symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT'] as TradingSymbol[],
       investmentAmount: 20,    // 单次交易的投入金额（USDT
-      amplitudeThreshold: 0.5,   // 价格振幅阈值（%）
+      amplitudeThreshold: 3,   // 价格振幅阈值（%）
       trendThreshold: 5.0,       // 趋势强度阈值（%）
 
       // 订单超时配置
@@ -56,7 +56,7 @@ export const useTradingStore = defineStore('trading', {
         partialFillThreshold: 0.9,
         balanceSafetyBuffer: 0.05,
         marketOrderDiscount: 0.999,
-        priceRangeRatio: 0.12, // 买入/卖出价格距离边界12%
+        priceRangeRatio: 0.1 // 买入/卖出价格距离边界10%
       },
 
       // 交易次数和间隔配置

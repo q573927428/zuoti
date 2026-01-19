@@ -129,7 +129,7 @@ npm start
 // 推荐配置（基于回测分析）
 const RECOMMENDED_CONFIG = {
   amplitudeThreshold: 0.03,      // 3% 振幅阈值
-  priceRangeRatio: 0.12,         // 12% 价格区间比例
+  priceRangeRatio: 0.1,         // 10% 价格区间比例
   trendThreshold: 5.0,           // 5% 趋势过滤
   investmentAmount: 20,          // 20 USDT/次（项目默认）
   dailyTradeLimit: 3,            // 每日3次交易

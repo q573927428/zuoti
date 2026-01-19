@@ -9,7 +9,7 @@
       "SOL/USDT"
     ],
     "investmentAmount": 20,
-    "amplitudeThreshold": 1,
+    "amplitudeThreshold": 3,
     "trendThreshold": 5,
     "orderTimeout": {
       "default": 7200000,
@@ -40,7 +40,7 @@
       "partialFillThreshold": 0.9,
       "balanceSafetyBuffer": 0.05,
       "marketOrderDiscount": 0.999,
-      "priceRangeRatio": 0.3
+      "priceRangeRatio": 0.1
     },
     "dailyTradeLimit": 3,
     "tradeInterval": 3600000

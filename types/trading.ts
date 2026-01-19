@@ -106,7 +106,7 @@ export interface TradingParametersConfig {
   partialFillThreshold: number // 部分成交判定阈值（0-1）
   balanceSafetyBuffer: number // 余额安全缓冲（0-1）
   marketOrderDiscount: number // 市价单价格折扣
-  priceRangeRatio: number // 买入/卖出价格距离边界的比例（0-1，默认0.12）
+  priceRangeRatio: number // 买入/卖出价格距离边界的比例（0-0.5，默认0.1）
 }
 
 // 系统配置

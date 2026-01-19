@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
           isAutoTrading: false,
           symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT'],
           investmentAmount: 100,
-          amplitudeThreshold: 0.5,
+          amplitudeThreshold: 3,
           trendThreshold: 5.0,
           orderTimeout: 60 * 60 * 1000,
         },

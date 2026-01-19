@@ -61,8 +61,11 @@ export class DataManager {
         partialFillThreshold: 0.9,
         balanceSafetyBuffer: 0.05,
         marketOrderDiscount: 0.999,
-        priceRangeRatio: 0.12, // 买入/卖出价格距离边界12%
+        priceRangeRatio: 0.1, // 买入/卖出价格距离边界10%
       },
+      // 交易次数和间隔配置
+      dailyTradeLimit: 3,                    // 每日交易次数限制
+      tradeInterval: 60 * 60 * 1000,         // 交易间隔时间（1小时）
     }
   }
   
