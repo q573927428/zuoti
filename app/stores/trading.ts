@@ -37,7 +37,7 @@ export const useTradingStore = defineStore('trading', {
 
       // 日切配置
       dailyReset: {
-        processingTime: '23:59',            // 23:00开始日切处理
+        processingTime: '23:00',            // 23:00开始日切处理
         warningTime: '23:30',               // 22:30开始预警
         forceLiquidationDiscount: 0.999,    // 强平价格折扣
       },

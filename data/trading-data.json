@@ -1,20 +1,20 @@
 {
   "tradingStatus": {
     "state": "BUY_ORDER_PLACED",
-    "symbol": "BNB/USDT",
-    "currentTradeId": "trade_1768798205822",
+    "symbol": "SOL/USDT",
+    "currentTradeId": "trade_1768810900244",
     "buyOrder": {
-      "orderId": "10795327280",
-      "symbol": "BNB/USDT",
+      "orderId": "16099979190",
+      "symbol": "SOL/USDT",
       "side": "buy",
-      "price": 916.04,
-      "amount": 0.021,
+      "price": 132.86,
+      "amount": 0.15,
       "status": "open",
-      "createdAt": 1768798205822
+      "createdAt": 1768810900244
     },
-    "high": 951.16,
-    "low": 901,
-    "lastUpdateTime": 1768798205822
+    "high": 134.12,
+    "low": 132.71,
+    "lastUpdateTime": 1768810900244
   },
   "tradeRecords": [
     {
@@ -126,8 +126,52 @@
       "buyPrice": 916.04,
       "amount": 0.021,
       "startTime": 1768798205822,
+      "status": "failed",
+      "endTime": 1768802449923,
+      "failureReason": "买单被取消"
+    },
+    {
+      "id": "trade_1768802481921",
+      "symbol": "BNB/USDT",
+      "buyOrderId": "10795637464",
+      "buyPrice": 909.57,
+      "amount": 0.021,
+      "startTime": 1768802481921,
+      "status": "failed",
+      "endTime": 1768806112232,
+      "failureReason": "买单超时"
+    },
+    {
+      "id": "trade_1768806143041",
+      "symbol": "BNB/USDT",
+      "buyOrderId": "10795939999",
+      "buyPrice": 917.64,
+      "amount": 0.021,
+      "startTime": 1768806143041,
+      "status": "failed",
+      "endTime": 1768809429313,
+      "failureReason": "价格突破上界 927.84，当前价格 927.86"
+    },
+    {
+      "id": "trade_1768809459998",
+      "symbol": "BNB/USDT",
+      "buyOrderId": "10796128192",
+      "buyPrice": 918.58,
+      "amount": 0.021,
+      "startTime": 1768809459998,
+      "status": "failed",
+      "endTime": 1768810869494,
+      "failureReason": "价格突破上界 927.87，当前价格 928.5"
+    },
+    {
+      "id": "trade_1768810900244",
+      "symbol": "SOL/USDT",
+      "buyOrderId": "16099979190",
+      "buyPrice": 132.86,
+      "amount": 0.15,
+      "startTime": 1768810900244,
       "status": "in_progress"
     }
   ],
-  "lastSaved": 1768798205823
+  "lastSaved": 1768810900245
 }

@@ -9,7 +9,7 @@
       "SOL/USDT"
     ],
     "investmentAmount": 20,
-    "amplitudeThreshold": 3,
+    "amplitudeThreshold": 1,
     "trendThreshold": 5,
     "orderTimeout": {
       "default": 7200000,
@@ -40,22 +40,23 @@
       "partialFillThreshold": 0.9,
       "balanceSafetyBuffer": 0.05,
       "marketOrderDiscount": 0.999,
-      "priceRangeRatio": 0.1
+      "priceRangeRatio": 0.11
     },
     "dailyTradeLimit": 3,
     "tradeInterval": 3600000
   },
   "stats": {
-    "totalTrades": 4,
+    "totalTrades": 8,
     "successfulTrades": 1,
-    "failedTrades": 3,
+    "failedTrades": 7,
     "totalProfit": 0.05,
     "totalProfitRate": 0,
     "annualizedReturn": 0,
     "currentDate": "2026-01-19",
     "tradedSymbols": {
-      "BNB/USDT": 3
+      "BNB/USDT": 6,
+      "SOL/USDT": 1
     }
   },
-  "lastSaved": 1768798205822
+  "lastSaved": 1768810900244
 }

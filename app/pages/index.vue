@@ -242,16 +242,16 @@
               <span>交易记录（全部）</span>
             </div>
           </template>
-          <el-table :data="store.tradeRecords" stripe style="width: 100%">
+          <el-table :data="sortedTradeRecords" stripe style="width: 100%">
             <el-table-column prop="symbol" label="交易对" width="120" />
             <el-table-column label="买入价" width="120">
               <template #default="{ row }">
-                {{ row.buyPrice?.toFixed(5) }}
+                {{ row.buyPrice?.toFixed(3) }}
               </template>
             </el-table-column>
             <el-table-column label="卖出价">
               <template #default="{ row }">
-                {{ row.sellPrice?.toFixed(5) || '-' }}
+                {{ row.sellPrice?.toFixed(3) || '-' }}
               </template>
             </el-table-column>
             <el-table-column label="数量">
@@ -512,6 +512,11 @@ onMounted(async () => {
     await store.loadPersistedData() // 同时刷新交易状态和记录
     await store.fetchCircuitBreakerState() // 刷新熔断器状态
   }, 30000) // 改为每30秒刷新一次，保持数据实时
+})
+
+// 添加计算属性，按开始时间倒序排列交易记录
+const sortedTradeRecords = computed(() => {
+  return [...store.tradeRecords].sort((a, b) => b.startTime - a.startTime)
 })
 
 // 刷新余额
