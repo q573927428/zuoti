@@ -140,11 +140,6 @@
           </template>
           <div class="status-content">
             <el-descriptions :column="3" border>
-              <el-descriptions-item label="交易对">{{ store.tradingStatus.symbol || '无' }}</el-descriptions-item>
-              <el-descriptions-item label="状态">{{ getStateText(store.tradingStatus.state) }}</el-descriptions-item>
-              <el-descriptions-item label="更新时间">
-                {{ new Date(store.tradingStatus.lastUpdateTime).toLocaleString() }}
-              </el-descriptions-item>
               <el-descriptions-item label="今日交易">
                 <el-tag :type="getTodayCompletedTrades() >= store.config.dailyTradeLimit && store.config.dailyTradeLimit > 0 ? 'danger' : 'success'">
                   {{ getTodayCompletedTrades() }}/{{ store.config.dailyTradeLimit || '无限制' }}
@@ -154,6 +149,11 @@
                 <el-tag :type="getTradeIntervalStatus().includes('可立即') ? 'success' : 'warning'">
                   {{ getTradeIntervalStatus() }}
                 </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="交易对">{{ store.tradingStatus.symbol || '无' }}</el-descriptions-item>
+              <el-descriptions-item label="状态">{{ getStateText(store.tradingStatus.state) }}</el-descriptions-item>
+              <el-descriptions-item label="更新时间">
+                {{ new Date(store.tradingStatus.lastUpdateTime).toLocaleString() }}
               </el-descriptions-item>
               <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单价格">
                 {{ store.tradingStatus.buyOrder.price }}
