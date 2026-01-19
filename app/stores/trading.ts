@@ -366,6 +366,7 @@ export const useTradingStore = defineStore('trading', {
     // 保存持久化数据
     async savePersistedData() {
       try {
+        // 1. 保存数据到文件
         await $fetch('/api/trading/save', {
           method: 'POST',
           body: {
@@ -375,8 +376,17 @@ export const useTradingStore = defineStore('trading', {
             config: this.config,
           }
         })
+        
+        // 2. 更新后端交易机器人实例的配置
+        await $fetch('/api/trading/config/update', {
+          method: 'POST',
+          body: this.config
+        })
+        
+        this.addDebugLog('配置已保存并更新到后端机器人实例')
       } catch (error) {
         console.error('保存持久化数据失败:', error)
+        this.addDebugLog(`保存配置失败: ${error instanceof Error ? error.message : String(error)}`)
       }
     },
 

@@ -1,0 +1,24 @@
+{
+  "name": "binance-2year-backtest",
+  "version": "1.0.0",
+  "description": "币安2年历史数据回测系统",
+  "main": "binance_2year_backtest.js",
+  "scripts": {
+    "start": "node binance_2year_backtest.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "binance",
+    "backtest",
+    "trading",
+    "crypto"
+  ],
+  "author": "Trading System",
+  "license": "MIT",
+  "dependencies": {
+    "ccxt": "^4.2.48"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
