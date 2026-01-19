@@ -1,7 +1,7 @@
 {
   "config": {
     "isTestnet": false,
-    "isAutoTrading": false,
+    "isAutoTrading": true,
     "symbols": [
       "ETH/USDT",
       "BTC/USDT",
@@ -46,14 +46,16 @@
     "tradeInterval": 3600000
   },
   "stats": {
-    "totalTrades": 1,
+    "totalTrades": 4,
     "successfulTrades": 1,
-    "failedTrades": 1,
+    "failedTrades": 3,
     "totalProfit": 0.05,
     "totalProfitRate": 0,
     "annualizedReturn": 0,
     "currentDate": "2026-01-19",
-    "tradedSymbols": {}
+    "tradedSymbols": {
+      "BNB/USDT": 3
+    }
   },
-  "lastSaved": 1768789116122
+  "lastSaved": 1768798205822
 }
