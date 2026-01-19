@@ -58,6 +58,10 @@ export const useTradingStore = defineStore('trading', {
         marketOrderDiscount: 0.999,
         priceRangeRatio: 0.12, // 买入/卖出价格距离边界12%
       },
+
+      // 交易次数和间隔配置
+      dailyTradeLimit: 3,                    // 每日交易次数限制
+      tradeInterval: 60 * 60 * 1000,         // 交易间隔时间（1小时）
     } as SystemConfig,
 
     // 交易状态

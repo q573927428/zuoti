@@ -73,16 +73,39 @@ export class StateHandlers {
       console.log('⏸️  当前处于日切时段，不接受新交易')
       return tradingStatus
     }
-    // 检查今天是否已经完成过交易
-    const today = getCurrentDate()
-    const todayCompletedTrades = tradeRecords.filter(record => {
-      const recordDate = getDateFromTimestamp(record.startTime)
-      return recordDate === today && record.status === 'completed'
-    })
     
-    if (todayCompletedTrades.length > 0) {
-      console.log('⏹️  今天已完成一次交易，不再交易')
-      return tradingStatus
+    // 检查每日交易次数限制
+    if (this.config.dailyTradeLimit > 0) {
+      const today = getCurrentDate()
+      const todayCompletedTrades = tradeRecords.filter(record => {
+        const recordDate = getDateFromTimestamp(record.startTime)
+        return recordDate === today && record.status === 'completed'
+      })
+      
+      if (todayCompletedTrades.length >= this.config.dailyTradeLimit) {
+        console.log(`⏹️  今天已完成 ${todayCompletedTrades.length}/${this.config.dailyTradeLimit} 次交易，不再交易`)
+        return tradingStatus
+      }
+    }
+    
+    // 检查交易时间间隔
+    if (this.config.tradeInterval > 0) {
+      const completedTrades = tradeRecords.filter(record => record.status === 'completed')
+      if (completedTrades.length > 0) {
+        // 按结束时间降序排序，获取最近一次完成的交易
+        const lastCompletedTrade = completedTrades.sort((a, b) => 
+          (b.endTime || 0) - (a.endTime || 0)
+        )[0]
+        
+        if (lastCompletedTrade && lastCompletedTrade.endTime) {
+          const timeSinceLastTrade = Date.now() - lastCompletedTrade.endTime
+          if (timeSinceLastTrade < this.config.tradeInterval) {
+            const remainingMinutes = Math.ceil((this.config.tradeInterval - timeSinceLastTrade) / 1000 / 60)
+            console.log(`⏳ 距离上次交易完成还需等待 ${remainingMinutes} 分钟`)
+            return tradingStatus
+          }
+        }
+      }
     }
     
     console.log('🔍 正在分析市场，寻找交易机会...')

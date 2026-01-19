@@ -145,6 +145,16 @@
               <el-descriptions-item label="更新时间">
                 {{ new Date(store.tradingStatus.lastUpdateTime).toLocaleString() }}
               </el-descriptions-item>
+              <el-descriptions-item label="今日交易">
+                <el-tag :type="getTodayCompletedTrades() >= store.config.dailyTradeLimit && store.config.dailyTradeLimit > 0 ? 'danger' : 'success'">
+                  {{ getTodayCompletedTrades() }}/{{ store.config.dailyTradeLimit || '无限制' }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="交易间隔状态" :span="2">
+                <el-tag :type="getTradeIntervalStatus().includes('可立即') ? 'success' : 'warning'">
+                  {{ getTradeIntervalStatus() }}
+                </el-tag>
+              </el-descriptions-item>
               <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单价格">
                 {{ store.tradingStatus.buyOrder.price }}
               </el-descriptions-item>
@@ -427,6 +437,30 @@
                 @change="handleConfigChange"
               />
             </el-form-item>
+            <el-form-item label="每日交易次数限制">
+              <el-input-number 
+                v-model="store.config.dailyTradeLimit" 
+                :min="0" 
+                :max="100" 
+                :step="1"
+                @change="handleConfigChange"
+              />
+              <span style="margin-left: 10px; color: #909399;">
+                (0表示无限制)
+              </span>
+            </el-form-item>
+            <el-form-item label="交易间隔(分钟)">
+              <el-input-number 
+                v-model="tradeIntervalMinutes" 
+                :min="0" 
+                :max="1440" 
+                :step="5"
+                @change="handleTradeIntervalChange"
+              />
+              <span style="margin-left: 10px; color: #909399;">
+                (0表示无间隔)
+              </span>
+            </el-form-item>
           </el-form>
         </el-card>
       </el-main>
@@ -450,6 +484,19 @@ const manualForm = ref({
   price: 0,
   amount: 0,
 })
+
+// 交易间隔分钟数（用于显示和输入）
+const tradeIntervalMinutes = computed({
+  get: () => Math.round(store.config.tradeInterval / 1000 / 60),
+  set: (minutes) => {
+    store.config.tradeInterval = minutes * 60 * 1000
+  }
+})
+
+// 处理交易间隔变化
+const handleTradeIntervalChange = async () => {
+  await handleConfigChange()
+}
 
 // 页面加载时初始化
 onMounted(async () => {
@@ -651,6 +698,38 @@ const getStateText = (state: string) => {
 const getCurrentPrice = (symbol: string) => {
   const price = store.currentPrices[symbol as keyof typeof store.currentPrices]
   return price ? price.toFixed(2) : '0.00'
+}
+
+// 获取今日完成的交易次数
+const getTodayCompletedTrades = () => {
+  const today = new Date().toLocaleDateString('zh-CN')
+  return store.tradeRecords.filter(record => {
+    if (record.status !== 'completed') return false
+    const recordDate = new Date(record.startTime).toLocaleDateString('zh-CN')
+    return recordDate === today
+  }).length
+}
+
+// 获取交易间隔状态
+const getTradeIntervalStatus = () => {
+  if (store.config.tradeInterval <= 0) return '无间隔限制'
+  
+  const completedTrades = store.tradeRecords.filter(record => record.status === 'completed')
+  if (completedTrades.length === 0) return '可立即交易'
+  
+  const lastCompletedTrade = completedTrades.sort((a, b) => 
+    (b.endTime || 0) - (a.endTime || 0)
+  )[0]
+  
+  if (!lastCompletedTrade || !lastCompletedTrade.endTime) return '可立即交易'
+  
+  const timeSinceLastTrade = Date.now() - lastCompletedTrade.endTime
+  if (timeSinceLastTrade >= store.config.tradeInterval) {
+    return '可立即交易'
+  } else {
+    const remainingMinutes = Math.ceil((store.config.tradeInterval - timeSinceLastTrade) / 1000 / 60)
+    return `等待 ${remainingMinutes} 分钟`
+  }
 }
 </script>
 

@@ -122,6 +122,8 @@ export interface SystemConfig {
   dailyReset: DailyResetConfig // 日切配置
   stopLoss: StopLossConfig // 止损配置
   trading: TradingParametersConfig // 交易参数配置
+  dailyTradeLimit: number // 每日交易次数限制，0表示无限制
+  tradeInterval: number // 交易间隔时间（毫秒），0表示无间隔
 }
 
 // 系统统计
