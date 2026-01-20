@@ -1,20 +1,30 @@
 {
   "tradingStatus": {
-    "state": "BUY_ORDER_PLACED",
+    "state": "SELL_ORDER_PLACED",
     "symbol": "ETH/USDT",
-    "currentTradeId": "trade_1768819851153",
+    "currentTradeId": "trade_1768893521280",
     "buyOrder": {
-      "orderId": "41857468961",
+      "orderId": "41887352103",
       "symbol": "ETH/USDT",
       "side": "buy",
-      "price": 3191.63,
-      "amount": 0.0062,
-      "status": "open",
-      "createdAt": 1768819851153
+      "price": 3120.35,
+      "amount": 0.0063,
+      "status": "closed",
+      "createdAt": 1768893521280,
+      "filledAt": 1768893549186
     },
-    "high": 3221.99,
-    "low": 3187.88,
-    "lastUpdateTime": 1768819851153
+    "high": 3190.75,
+    "low": 3085.17,
+    "lastUpdateTime": 1768893521280,
+    "sellOrder": {
+      "orderId": "41893079094",
+      "symbol": "ETH/USDT",
+      "side": "sell",
+      "price": 3159.076,
+      "amount": 0.0063,
+      "status": "open",
+      "createdAt": 1768902107381
+    }
   },
   "tradeRecords": [
     {
@@ -181,8 +191,83 @@
       "buyPrice": 3191.63,
       "amount": 0.0062,
       "startTime": 1768819851153,
-      "status": "in_progress"
+      "status": "failed",
+      "endTime": 1768824917113,
+      "failureReason": "价格突破上界 3221.99，当前价格 3223.24"
+    },
+    {
+      "id": "trade_1768824948041",
+      "symbol": "ETH/USDT",
+      "buyOrderId": "41859089265",
+      "buyPrice": 3192.75,
+      "amount": 0.0062,
+      "startTime": 1768824948041,
+      "status": "failed",
+      "endTime": 1768826087880,
+      "failureReason": "价格突破上界 3231.27，当前价格 3233.04"
+    },
+    {
+      "id": "trade_1768826119138",
+      "symbol": "ETH/USDT",
+      "buyOrderId": "41859475302",
+      "buyPrice": 3205.34,
+      "amount": 0.0062,
+      "startTime": 1768826119138,
+      "status": "failed",
+      "endTime": 1768829748722,
+      "failureReason": "买单超时"
+    },
+    {
+      "id": "trade_1768829780297",
+      "symbol": "ETH/USDT",
+      "buyOrderId": "41860662659",
+      "buyPrice": 3208.98,
+      "amount": 0.0062,
+      "startTime": 1768829780297,
+      "status": "completed",
+      "sellOrderId": "41861303477",
+      "sellPrice": 3210.9858,
+      "profit": 0.01,
+      "profitRate": 0.06,
+      "endTime": 1768838424294
+    },
+    {
+      "id": "trade_1768842054423",
+      "symbol": "ETH/USDT",
+      "buyOrderId": "41865257000",
+      "buyPrice": 3212.87,
+      "amount": 0.0062,
+      "startTime": 1768842054423,
+      "status": "failed",
+      "endTime": 1768845684245,
+      "failureReason": "买单超时"
+    },
+    {
+      "id": "trade_1768845715084",
+      "symbol": "ETH/USDT",
+      "buyOrderId": "41866260867",
+      "buyPrice": 3212.87,
+      "amount": 0.0062,
+      "startTime": 1768845715084,
+      "status": "completed",
+      "sellOrderId": "41883608966",
+      "sellPrice": 3130.8457599999997,
+      "endTime": 1768889893513,
+      "failureReason": "卖单超时",
+      "profit": -0.51,
+      "profitRate": -2.55
+    },
+    {
+      "id": "trade_1768893521280",
+      "symbol": "ETH/USDT",
+      "buyOrderId": "41887352103",
+      "buyPrice": 3136.58,
+      "amount": 0.0063,
+      "startTime": 1768893521280,
+      "status": "in_progress",
+      "sellOrderId": "41893079094",
+      "sellPrice": 3159.076
     }
   ],
-  "lastSaved": 1768820190771
+  "lastSaved": 1768902107383
 }

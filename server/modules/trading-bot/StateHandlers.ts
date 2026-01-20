@@ -471,7 +471,53 @@ export class StateHandlers {
     const stopLossResult = await this.checkStopLoss(tradingStatus, tradeRecords, stats)
     if (stopLossResult) return stopLossResult
     
-    // 重新分析市场，获取卖出价
+    // 【新增】检查市场反转 - 避免用过时的价格区间挂单
+    const currentPrice = await this.orderManager.getCurrentPrice(tradingStatus.symbol)
+    if (tradingStatus.low && currentPrice < tradingStatus.low) {
+      console.log(`⚠️  市场已反转：当前价格 ${currentPrice} 低于原区间下界 ${tradingStatus.low}`)
+      console.log('🔄 重新分析市场，更新价格区间...')
+      
+      // 重新分析市场，获取新的价格区间和卖出价
+      const result = await findBestTradingSymbol(
+        [tradingStatus.symbol],
+        this.config.amplitudeThreshold,
+        this.config.trendThreshold,
+        this.config.trading.priceRangeRatio
+      )
+      
+      if (!result.bestSymbol) {
+        console.log('⏳ 市场不稳定，暂不挂单，等待下次循环')
+        return tradingStatus  // 保持 BOUGHT 状态
+      }
+      
+      // 更新价格区间（适应新的市场环境）
+      tradingStatus.high = result.bestSymbol.high
+      tradingStatus.low = result.bestSymbol.low
+      console.log(`📊 价格区间已更新: ${result.bestSymbol.low} - ${result.bestSymbol.high}`)
+      
+      // 创建卖单（使用新的卖出价）
+      const sellOrder = await this.orderManager.createSell(
+        tradingStatus.symbol,
+        tradingStatus.buyOrder.amount,
+        result.bestSymbol.sellPrice
+      )
+      
+      // 更新交易记录
+      const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+      if (record) {
+        record.sellOrderId = sellOrder.orderId
+        record.sellPrice = result.bestSymbol.sellPrice
+      }
+      
+      tradingStatus.sellOrder = sellOrder
+      tradingStatus.state = 'SELL_ORDER_PLACED'
+      
+      console.log(`💰 卖单已挂: ${tradingStatus.symbol} @ ${result.bestSymbol.sellPrice}`)
+      
+      return tradingStatus
+    }
+    
+    // 正常流程：重新分析市场，获取卖出价
     const result = await findBestTradingSymbol(
       [tradingStatus.symbol],
       this.config.amplitudeThreshold,
@@ -659,14 +705,6 @@ export class StateHandlers {
       return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined }
     }
     
-    // 价格偏离保护
-    const priceDeviation = ((tradingStatus.sellOrder!.price - currentPrice) / currentPrice) * 100
-    if (priceDeviation > 2) {
-      console.log(`⚠️  卖单价格偏离过大: ${priceDeviation.toFixed(2)}%`)
-      await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.sellOrder!.orderId)
-      return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined }
-    }
-    
     // 检查超时
     const activeTime = this.orderManager.getOrderActiveTime(orderStatus, tradingStatus.sellOrder!.createdAt)
     const sellTimeout = this.getOrderTimeout('sell', tradingStatus.symbol)
@@ -708,20 +746,14 @@ export class StateHandlers {
         return { state: 'DONE', lastUpdateTime: Date.now() }
       }
       
-      // 仍有较多未成交
+      // 仍有较多未成交，更新剩余数量
+      console.log(`⚠️ 部分成交 ${filledPercent.toFixed(2)}%，更新剩余数量，继续交易`)
       tradingStatus.buyOrder!.amount = orderStatus.amount - orderStatus.filled
       return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined }
     }
     
-    // 完全未成交，记录失败原因
-    const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
-    if (record) {
-      record.status = 'failed'
-      record.endTime = Date.now()
-      record.failureReason = '卖单超时'
-    }
-    stats.failedTrades++
-    
+    // 完全未成交，保持交易进行中，下个循环会重新挂卖单
+    console.log('⚠️ 卖单完全未成交，回到已买入状态，等待重新挂单')
     return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined }
   }
   
