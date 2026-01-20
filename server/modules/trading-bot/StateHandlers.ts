@@ -702,7 +702,7 @@ export class StateHandlers {
     if (tradingStatus.low && currentPrice < tradingStatus.low) {
       console.log(`⚠️  市场反转保护: 当前价格 ${currentPrice} 已跌破原区间下界 ${tradingStatus.low}`)
       await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.sellOrder!.orderId)
-      return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined }
+      return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined, lastUpdateTime: Date.now() }
     }
     
     // 检查超时
@@ -749,12 +749,12 @@ export class StateHandlers {
       // 仍有较多未成交，更新剩余数量
       console.log(`⚠️ 部分成交 ${filledPercent.toFixed(2)}%，更新剩余数量，继续交易`)
       tradingStatus.buyOrder!.amount = orderStatus.amount - orderStatus.filled
-      return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined }
+      return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined, lastUpdateTime: Date.now() }
     }
     
     // 完全未成交，保持交易进行中，下个循环会重新挂卖单
     console.log('⚠️ 卖单完全未成交，回到已买入状态，等待重新挂单')
-    return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined }
+    return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined, lastUpdateTime: Date.now() }
   }
   
   /**
