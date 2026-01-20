@@ -15,7 +15,7 @@ export interface LogEntry {
 
 class Logger {
   private logs: LogEntry[] = [];
-  private maxLogs = 2000; // 最多存储1000条日志
+  private maxLogs = 3000; // 最多存储1000条日志
   private logDir: string;
   private currentLogFile: string;
   private saveInterval: NodeJS.Timeout | null = null;
