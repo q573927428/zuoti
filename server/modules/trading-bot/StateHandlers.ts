@@ -738,7 +738,7 @@ export class StateHandlers {
     // 处理部分成交
     if (orderStatus.filled && orderStatus.filled > 0) {
       const filledPercent = (orderStatus.filled / orderStatus.amount) * 100
-      if (filledPercent > 80) {
+      if (filledPercent >= 98) {
         console.log(`✅ 已成交 ${filledPercent.toFixed(2)}%，视为完成`)
         const actualSellPrice = this.orderManager.getActualPrice(orderStatus, tradingStatus.sellOrder!.price)
         const profitResult = calculateProfit(orderStatus.filled, tradingStatus.buyOrder!.price, actualSellPrice)
