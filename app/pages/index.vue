@@ -207,7 +207,7 @@
               <template #default="{ row }">
                 <div v-if="row.timeframes" style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
                   <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="color: #909399; width: 30px; font-weight: bold;">15m:</span>
+                    <span style="color: #909399; width: 38px; font-weight: bold;">15m:</span>
                     <div style="flex: 1; display: flex; gap: 2px;">
                       <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="color: #606266; font-size: 10px;">振幅:</span>
@@ -226,7 +226,7 @@
                     <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
                   </div>
                   <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="color: #909399; width: 30px; font-weight: bold;">1h:</span>
+                    <span style="color: #909399; width: 38px; font-weight: bold;">1h:</span>
                     <div style="flex: 1; display: flex; gap: 2px;">
                       <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="color: #606266; font-size: 10px;">振幅:</span>
@@ -245,7 +245,7 @@
                     <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
                   </div>
                   <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="color: #909399; width: 30px; font-weight: bold;">4h:</span>
+                    <span style="color: #909399; width: 38px; font-weight: bold;">4h:</span>
                     <div style="flex: 1; display: flex; gap: 2px;">
                       <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="color: #606266; font-size: 10px;">振幅:</span>
