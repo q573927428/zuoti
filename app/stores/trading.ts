@@ -118,6 +118,27 @@ export const useTradingStore = defineStore('trading', {
     // 调试日志
     debugLogs: [] as string[],
 
+    // 后端日志
+    backendLogs: [] as Array<{
+      timestamp: number;
+      level: 'info' | 'warn' | 'error' | 'debug';
+      message: string;
+      source?: string;
+    }>,
+    
+    // 后端日志统计
+    backendLogStats: {
+      total: 0,
+      lastHour: 0,
+      lastDay: 0,
+      byLevel: {
+        info: 0,
+        warn: 0,
+        error: 0,
+        debug: 0,
+      },
+    },
+
     // 熔断器状态
     circuitBreakerState: {
       isTripped: false,
@@ -460,6 +481,66 @@ export const useTradingStore = defineStore('trading', {
       } catch (error: any) {
         this.addDebugLog(`切换自动交易失败: ${error.message}`)
         throw error
+      }
+    },
+
+    // 获取后端日志
+    async fetchBackendLogs(options?: {
+      level?: 'all' | 'info' | 'warn' | 'error' | 'debug';
+      limit?: number;
+      since?: number;
+      search?: string;
+    }) {
+      try {
+        const params = new URLSearchParams()
+        if (options?.level) params.append('level', options.level)
+        if (options?.limit) params.append('limit', options.limit.toString())
+        if (options?.since) params.append('since', options.since.toString())
+        if (options?.search) params.append('search', options.search)
+        
+        const response = await $fetch(`/api/trading/logs?${params.toString()}`) as any
+        
+        if (response.success) {
+          this.backendLogs = response.data.logs
+          this.backendLogStats = response.data.stats
+          this.addDebugLog(`成功获取后端日志 (${response.data.logs.length}条)`)
+          return { success: true, data: response.data }
+        } else {
+          this.addDebugLog(`获取后端日志失败: ${response.message}`)
+          return { success: false, message: response.message }
+        }
+      } catch (error: any) {
+        this.addDebugLog(`获取后端日志错误: ${error.message}`)
+        console.error('获取后端日志失败:', error)
+        return { success: false, message: error.message }
+      }
+    },
+
+    // 清空后端日志
+    async clearBackendLogs() {
+      try {
+        const response = await $fetch('/api/trading/logs/clear', {
+          method: 'POST'
+        }) as any
+        
+        if (response.success) {
+          this.backendLogs = []
+          this.backendLogStats = {
+            total: 0,
+            lastHour: 0,
+            lastDay: 0,
+            byLevel: { info: 0, warn: 0, error: 0, debug: 0 },
+          }
+          this.addDebugLog('后端日志已清空')
+          return { success: true, message: response.message }
+        } else {
+          this.addDebugLog(`清空后端日志失败: ${response.message}`)
+          return { success: false, message: response.message }
+        }
+      } catch (error: any) {
+        this.addDebugLog(`清空后端日志错误: ${error.message}`)
+        console.error('清空后端日志失败:', error)
+        return { success: false, message: error.message }
       }
     },
   },

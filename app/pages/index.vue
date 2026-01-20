@@ -208,7 +208,7 @@
                 <div v-if="row.timeframes" style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
                   <div style="display: flex; align-items: center; gap: 5px;">
                     <span style="color: #909399; width: 30px; font-weight: bold;">15m:</span>
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+                    <div style="flex: 1; display: flex; gap: 2px;">
                       <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="color: #606266; font-size: 10px;">振幅:</span>
                         <el-tag :type="getAmplitudeType(row.timeframes['15m']?.amplitude)" size="small">
@@ -227,7 +227,7 @@
                   </div>
                   <div style="display: flex; align-items: center; gap: 5px;">
                     <span style="color: #909399; width: 30px; font-weight: bold;">1h:</span>
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+                    <div style="flex: 1; display: flex; gap: 2px;">
                       <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="color: #606266; font-size: 10px;">振幅:</span>
                         <el-tag :type="getAmplitudeType(row.timeframes['1h']?.amplitude)" size="small">
@@ -246,7 +246,7 @@
                   </div>
                   <div style="display: flex; align-items: center; gap: 5px;">
                     <span style="color: #909399; width: 30px; font-weight: bold;">4h:</span>
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+                    <div style="flex: 1; display: flex; gap: 2px;">
                       <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="color: #606266; font-size: 10px;">振幅:</span>
                         <el-tag :type="getAmplitudeType(row.timeframes['4h']?.amplitude)" size="small">
@@ -269,7 +269,7 @@
             </el-table-column>
             
             <!-- 如果启用多时间框架，显示评分 -->
-            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="评分" >
+            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="评分" width="150" >
               <template #default="{ row }">
                 <div v-if="row.score !== undefined">
                   <el-progress 
@@ -509,6 +509,98 @@
           </div>
         </el-card>
 
+        <!-- 后端日志 -->
+        <el-card shadow="hover" class="backend-log-card">
+          <template #header>
+            <div class="card-header">
+              <span>记录日志</span>
+              <div>
+                <el-button type="primary" size="small" @click="refreshBackendLogs" :loading="loadingBackendLogs">
+                  刷新日志
+                </el-button>
+                <el-button type="danger" size="small" @click="handleClearBackendLogs" :loading="clearingBackendLogs">
+                  清空日志
+                </el-button>
+              </div>
+            </div>
+          </template>
+          
+          <!-- 日志统计和文件信息 -->
+          <div class="log-stats">
+            <el-row :gutter="20">
+              <el-col :xs="12" :sm="6">
+                <div class="log-stat-item">
+                  <div class="log-stat-label">总日志数</div>
+                  <div class="log-stat-value">{{ store.backendLogStats.total }}</div>
+                </div>
+              </el-col>
+              <el-col :xs="12" :sm="6">
+                <div class="log-stat-item">
+                  <div class="log-stat-label">最近1小时</div>
+                  <div class="log-stat-value">{{ store.backendLogStats.lastHour }}</div>
+                </div>
+              </el-col>
+              <el-col :xs="12" :sm="6">
+                <div class="log-stat-item">
+                  <div class="log-stat-label">信息</div>
+                  <div class="log-stat-value info">{{ store.backendLogStats.byLevel.info }}</div>
+                </div>
+              </el-col>
+              <el-col :xs="12" :sm="6">
+                <div class="log-stat-item">
+                  <div class="log-stat-label">错误</div>
+                  <div class="log-stat-value error">{{ store.backendLogStats.byLevel.error }}</div>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+          
+          <!-- 日志过滤 -->
+          <div class="log-filters">
+            <el-form :inline="true" :model="logFilters" class="demo-form-inline">
+              <el-form-item label="日志级别">
+                <el-select v-model="logFilters.level" placeholder="全部" size="small" @change="refreshBackendLogs">
+                  <el-option label="全部" value="all" />
+                  <el-option label="信息" value="info" />
+                  <el-option label="警告" value="warn" />
+                  <el-option label="错误" value="error" />
+                  <el-option label="调试" value="debug" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="搜索">
+                <el-input v-model="logFilters.search" placeholder="搜索日志内容" size="small" @keyup.enter="refreshBackendLogs" />
+              </el-form-item>
+              <el-form-item label="显示条数">
+                <el-select v-model="logFilters.limit" placeholder="100条" size="small" @change="refreshBackendLogs">
+                  <el-option label="50条" :value="50" />
+                  <el-option label="100条" :value="100" />
+                  <el-option label="200条" :value="200" />
+                  <el-option label="500条" :value="500" />
+                </el-select>
+              </el-form-item>
+            </el-form>
+          </div>
+          
+          <!-- 日志列表 -->
+          <div class="backend-logs">
+            <div v-if="store.backendLogs.length === 0" class="empty-logs">
+              <el-empty description="暂无后端日志" />
+            </div>
+            <div v-else class="log-list">
+              <div v-for="(log, index) in store.backendLogs" :key="index" class="backend-log-item" :class="`log-level-${log.level}`">
+                <div class="log-header">
+                  <span class="log-timestamp">{{ formatLogTimestamp(log.timestamp) }}</span>
+                  <el-tag :type="getLogLevelType(log.level)" size="small">
+                    {{ getLogLevelText(log.level) }}
+                  </el-tag>
+                  <span class="log-source" v-if="log.source">{{ log.source }}</span>
+                </div>
+                <div class="log-message">{{ log.message }}</div>
+              </div>
+            </div>
+          </div>
+        </el-card>
+
         <!-- 系统配置 -->
         <el-card shadow="hover" class="config-card">
           <template #header>
@@ -606,6 +698,17 @@ const testing = ref(false)
 const loadingBalance = ref(false)
 const manualLoading = ref(false)
 const resettingCircuitBreaker = ref(false)
+
+// 后端日志相关
+const loadingBackendLogs = ref(false)
+const clearingBackendLogs = ref(false)
+
+// 日志过滤
+const logFilters = ref({
+  level: 'all' as 'all' | 'info' | 'warn' | 'error' | 'debug',
+  limit: 100,
+  search: '',
+})
 
 // 手动交易表单
 const manualForm = ref({
@@ -919,6 +1022,81 @@ const getScoreColor = (score: number | undefined) => {
   if (score >= 60) return '#e6a23c'  // 橙色
   return '#f56c6c'  // 红色
 }
+
+// 刷新后端日志
+const refreshBackendLogs = async () => {
+  loadingBackendLogs.value = true
+  try {
+    const result = await store.fetchBackendLogs({
+      level: logFilters.value.level,
+      limit: logFilters.value.limit,
+      search: logFilters.value.search,
+    })
+    
+    if (result.success) {
+      ElMessage.success(`已获取 ${result.data?.logs.length || 0} 条日志`)
+    } else {
+      ElMessage.warning(result.message || '获取日志失败')
+    }
+  } catch (error: any) {
+    ElMessage.error('刷新日志失败: ' + error.message)
+  } finally {
+    loadingBackendLogs.value = false
+  }
+}
+
+// 清空后端日志
+const handleClearBackendLogs = async () => {
+  clearingBackendLogs.value = true
+  try {
+    const result = await store.clearBackendLogs()
+    if (result.success) {
+      ElMessage.success(result.message || '日志已清空')
+    } else {
+      ElMessage.warning(result.message || '清空日志失败')
+    }
+  } catch (error: any) {
+    ElMessage.error('清空日志失败: ' + error.message)
+  } finally {
+    clearingBackendLogs.value = false
+  }
+}
+
+// 格式化日志时间戳
+const formatLogTimestamp = (timestamp: number) => {
+  const date = new Date(timestamp)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
+}
+
+// 获取日志级别类型
+const getLogLevelType = (level: string) => {
+  const typeMap: Record<string, any> = {
+    'info': 'info',
+    'warn': 'warning',
+    'error': 'danger',
+    'debug': 'success',
+  }
+  return typeMap[level] || 'info'
+}
+
+// 获取日志级别文本
+const getLogLevelText = (level: string) => {
+  const textMap: Record<string, string> = {
+    'info': '信息',
+    'warn': '警告',
+    'error': '错误',
+    'debug': '调试',
+  }
+  return textMap[level] || level
+}
 </script>
 
 <style scoped>
@@ -1217,5 +1395,115 @@ const getScoreColor = (score: number | undefined) => {
 
 .empty-logs {
   padding: 40px 0;
+}
+
+/* 后端日志样式 */
+.backend-log-card {
+  margin-bottom: 20px;
+}
+
+.log-stats {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.log-stat-item {
+  text-align: center;
+  padding: 10px;
+}
+
+.log-stat-label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 5px;
+}
+
+.log-stat-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.log-stat-value.info {
+  color: #409eff;
+}
+
+.log-stat-value.error {
+  color: #f56c6c;
+}
+
+.log-filters {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+.backend-logs {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+}
+
+.backend-log-item {
+  padding: 12px;
+  border-bottom: 1px solid #ebeef5;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.backend-log-item:hover {
+  background: #f5f7fa;
+}
+
+.backend-log-item.log-level-error {
+  background-color: #fef0f0;
+  border-left: 3px solid #f56c6c;
+}
+
+.backend-log-item.log-level-warn {
+  background-color: #fdf6ec;
+  border-left: 3px solid #e6a23c;
+}
+
+.backend-log-item.log-level-info {
+  background-color: #f4f4f5;
+  border-left: 3px solid #909399;
+}
+
+.backend-log-item.log-level-debug {
+  background-color: #f0f9eb;
+  border-left: 3px solid #67c23a;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.log-timestamp {
+  color: #909399;
+  font-size: 11px;
+}
+
+.log-source {
+  color: #409eff;
+  font-size: 11px;
+  background: #ecf5ff;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.log-message {
+  color: #606266;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 </style>

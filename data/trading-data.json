@@ -17,13 +17,13 @@
     "low": 3085.17,
     "lastUpdateTime": 1768893521280,
     "sellOrder": {
-      "orderId": "41893079094",
+      "orderId": "41895724539",
       "symbol": "ETH/USDT",
       "side": "sell",
-      "price": 3159.076,
+      "price": 3147.974,
       "amount": 0.0063,
       "status": "open",
-      "createdAt": 1768902107381
+      "createdAt": 1768909364609
     }
   },
   "tradeRecords": [
@@ -265,9 +265,9 @@
       "amount": 0.0063,
       "startTime": 1768893521280,
       "status": "in_progress",
-      "sellOrderId": "41893079094",
-      "sellPrice": 3159.076
+      "sellOrderId": "41895724539",
+      "sellPrice": 3147.974
     }
   ],
-  "lastSaved": 1768902107383
+  "lastSaved": 1768909364610
 }
