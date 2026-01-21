@@ -398,9 +398,32 @@ export class StateHandlers {
     const protection = checkProtection(currentPrice, tradingStatus.high!, tradingStatus.low!)
     
     // 检查保护机制
-    if (protection.needProtection) {
-      console.log(`⚠️  触发保护机制: ${protection.reason}`)
-      return await this.cancelBuyOrder(tradingStatus, orderStatus, tradeRecords, stats, protection.reason)
+    if (protection.needProtection && protection.reason) {
+      // 价格跌破下界 - 真正的风险，标记失败
+      if (protection.reason.includes('跌破下界')) {
+        console.log(`⚠️  触发保护机制: ${protection.reason}`)
+        return await this.cancelBuyOrder(tradingStatus, orderStatus, tradeRecords, stats, protection.reason)
+      }
+      
+      // 价格突破上界 - 可能是新机会，取消订单后重新分析
+      if (protection.reason.includes('突破上界')) {
+        console.log(`🔄 ${protection.reason}，取消订单后将重新分析市场`)
+        try {
+          await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.buyOrder!.orderId)
+          console.log('✅ 订单已取消，回到 IDLE 状态等待重新分析')
+        } catch (error) {
+          console.error('取消订单失败:', error)
+        }
+        
+        // 删除当前交易记录（不计入失败）
+        const recordIndex = tradeRecords.findIndex(r => r.id === tradingStatus.currentTradeId)
+        if (recordIndex !== -1) {
+          tradeRecords.splice(recordIndex, 1)
+          stats.totalTrades--  // 不计入总交易数
+        }
+        
+        return { state: 'IDLE', lastUpdateTime: Date.now() }
+      }
     }
     
     // 检查超时
@@ -409,8 +432,37 @@ export class StateHandlers {
     const isTimeout = checkOrderTimeout(activeTime, buyTimeout)
     
     if (isTimeout) {
-      console.log(`⏱️  买单超时 (${buyTimeout / 1000}秒)，准备取消订单`)
-      return await this.cancelBuyOrder(tradingStatus, orderStatus, tradeRecords, stats, '买单超时')
+      console.log(`🔄 买单超时 (${buyTimeout / 1000}秒)，取消订单后将重新分析市场`)
+      try {
+        await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.buyOrder!.orderId)
+        console.log('✅ 订单已取消，回到 IDLE 状态等待重新分析')
+      } catch (error) {
+        console.error('取消订单失败:', error)
+      }
+      
+      // 处理部分成交的情况
+      if (orderStatus.filled && orderStatus.filled > 0) {
+        const filledPercent = (orderStatus.filled / orderStatus.amount) * 100
+        console.log(`⚠️  订单已部分成交 ${filledPercent.toFixed(2)}%`)
+        
+        // 如果成交比例较高，保留交易继续
+        if (filledPercent >= 50) {
+          console.log('✅ 成交比例较高，保留交易继续执行')
+          tradingStatus.buyOrder!.amount = orderStatus.filled
+          tradingStatus.buyOrder!.status = 'closed'
+          tradingStatus.state = 'BOUGHT'
+          return tradingStatus
+        }
+      }
+      
+      // 完全未成交或成交很少，删除交易记录（不计入失败）
+      const recordIndex = tradeRecords.findIndex(r => r.id === tradingStatus.currentTradeId)
+      if (recordIndex !== -1) {
+        tradeRecords.splice(recordIndex, 1)
+        stats.totalTrades--  // 不计入总交易数
+      }
+      
+      return { state: 'IDLE', lastUpdateTime: Date.now() }
     }
     
     console.log(`⏳ 买单等待成交中: ${tradingStatus.symbol} ${orderStatus.filled || 0}/${orderStatus.amount}`)
