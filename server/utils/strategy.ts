@@ -279,26 +279,40 @@ export async function findBestTradingSymbolMultiTimeframe(
   bestSymbol: MultiTimeframeAnalysis | null
   allAnalyses: MultiTimeframeAnalysis[] 
 }> {
-  // 分析所有交易对
-  const analyses = await Promise.all(
-    symbols.map(symbol => 
-      analyzeMultiTimeframe(symbol, amplitudeThreshold, trendThreshold, priceRangeRatio, multiTimeframeConfig)
+  try {
+    // 分析所有交易对
+    const analyses = await Promise.all(
+      symbols.map(symbol => 
+        analyzeMultiTimeframe(symbol, amplitudeThreshold, trendThreshold, priceRangeRatio, multiTimeframeConfig)
+      )
     )
-  )
-  
-  // 过滤出通过多时间框架确认的交易对
-  const validAnalyses = analyses.filter(a => a.isValid)
-  
-  // 按评分排序，选择分数最高的
-  let bestSymbol: MultiTimeframeAnalysis | null = null
-  if (validAnalyses.length > 0) {
-    bestSymbol = validAnalyses.reduce((max, current) => 
-      current.score > max.score ? current : max
-    )
-  }
-  
-  return {
-    bestSymbol,
-    allAnalyses: analyses,
+    
+    // 过滤出通过多时间框架确认的交易对
+    const validAnalyses = analyses.filter(a => a.isValid)
+    
+    // 按评分排序，评分相同时按1h振幅排序
+    let bestSymbol: MultiTimeframeAnalysis | null = null
+    if (validAnalyses.length > 0) {
+      bestSymbol = validAnalyses.reduce((max, current) => {
+        // 首先比较评分
+        if (current.score > max.score) return current
+        if (current.score < max.score) return max
+        
+        // 评分相同的情况下，比较1h振幅
+        const currentAmplitude = current.timeframes['1h'].amplitude
+        const maxAmplitude = max.timeframes['1h'].amplitude
+        
+        // 选择1h振幅更大的交易对
+        return currentAmplitude > maxAmplitude ? current : max
+      })
+    }
+    
+    return {
+      bestSymbol,
+      allAnalyses: analyses,
+    }
+  } catch (error) {
+    console.error('使用多时间框架寻找最佳交易对失败:', error)
+    throw error
   }
 }
