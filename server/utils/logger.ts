@@ -130,10 +130,6 @@ class Logger {
       // 清空未保存队列
       this.unsavedLogs = [];
       
-      if (!this.isShuttingDown && logsToSave.length > 0) {
-        console.log(`💾 已保存 ${logsToSave.length} 条日志到文件`);
-      }
-      
     } catch (error) {
       console.error('保存日志到文件失败:', error);
     }
