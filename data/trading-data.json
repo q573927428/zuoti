@@ -13,17 +13,17 @@
       "createdAt": 1768978874800,
       "filledAt": 1768978932763
     },
-    "high": 884.15,
-    "low": 869.42,
-    "lastUpdateTime": 1768997070852,
+    "high": 882.36,
+    "low": 864.54,
+    "lastUpdateTime": 1768998140844,
     "sellOrder": {
-      "orderId": "10816483447",
+      "orderId": "10816732774",
       "symbol": "BNB/USDT",
       "side": "sell",
-      "price": 881.152,
+      "price": 878.796,
       "amount": 0.113,
       "status": "open",
-      "createdAt": 1768997099695
+      "createdAt": 1768998170345
     }
   },
   "tradeRecords": [
@@ -35,9 +35,9 @@
       "amount": 0.113,
       "startTime": 1768978874800,
       "status": "in_progress",
-      "sellOrderId": "10816483447",
-      "sellPrice": 881.152
+      "sellOrderId": "10816732774",
+      "sellPrice": 878.796
     }
   ],
-  "lastSaved": 1768997099696
+  "lastSaved": 1768998700984
 }

@@ -1,7 +1,7 @@
 {
   "config": {
     "isTestnet": false,
-    "isAutoTrading": true,
+    "isAutoTrading": false,
     "symbols": [
       "ETH/USDT",
       "BTC/USDT",
@@ -72,5 +72,5 @@
       "BNB/USDT": 2
     }
   },
-  "lastSaved": 1768997099696
+  "lastSaved": 1768998700984
 }
