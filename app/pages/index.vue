@@ -730,21 +730,41 @@ const handleTradeIntervalChange = async () => {
   await handleConfigChange()
 }
 
-// 页面加载时初始化
-onMounted(async () => {
-  await store.loadPersistedData()
-  await refreshBalance()
+// 定时器 & 停止标志
+let timer: number | null = null, stopped = false
+
+// 执行一次数据刷新
+const refreshOnce = async () => {
   await refreshAnalysis()
+  await refreshBalance()
+  await store.loadPersistedData()
   await store.fetchCircuitBreakerState()
-  
-  // 定时刷新数据 - 增加刷新频率
-  setInterval(async () => {
-    await refreshAnalysis()
-    await refreshBalance()
-    await store.loadPersistedData() // 同时刷新交易状态和记录
-    await store.fetchCircuitBreakerState() // 刷新熔断器状态
-  }, 30000) // 改为每30秒刷新一次，保持数据实时
+}
+
+// 定时刷新循环
+async function loop() {
+  if (stopped) return
+  try {
+    await refreshOnce()
+  } catch (e) {
+    console.error('定时刷新失败:', e)
+  }
+  if (!stopped) {
+    timer = window.setTimeout(loop, 30000)
+  }
+}
+
+// 页面加载启动刷新
+onMounted(async () => { 
+  await refreshOnce(); loop() 
 })
+
+// 页面卸载停止刷新
+onUnmounted(() => {
+  stopped = true
+  timer !== null && (clearTimeout(timer), timer = null)
+})
+
 
 // 添加计算属性，按开始时间倒序排列交易记录
 const sortedTradeRecords = computed(() => {
