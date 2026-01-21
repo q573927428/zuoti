@@ -15,12 +15,14 @@ export interface LogEntry {
 
 class Logger {
   private logs: LogEntry[] = [];
-  private maxLogs = 3000; // 最多存储1000条日志
+  private unsavedLogs: LogEntry[] = []; // 未保存的日志队列
+  private maxLogs = 1000; // 内存中最多保留1000条日志（用于快速查询）
   private logDir: string;
   private currentLogFile: string;
   private saveInterval: NodeJS.Timeout | null = null;
   private readonly SAVE_INTERVAL_MS = 30 * 1000; // 每30秒保存一次
-  private readonly MAX_LOG_FILES = 30; // 最多保留7天的日志文件
+  private readonly MAX_LOG_FILES = 30; // 最多保留30天的日志文件
+  private isShuttingDown = false; // 标记是否正在关闭
   
   constructor() {
     // 初始化日志目录
@@ -32,7 +34,7 @@ class Logger {
     // 设置当前日志文件
     this.currentLogFile = this.getLogFileName();
     
-    // 加载历史日志
+    // 加载历史日志（只加载最近的部分）
     this.loadHistoricalLogs();
     
     // 重写console方法以捕获日志
@@ -41,8 +43,12 @@ class Logger {
     // 启动定期保存
     this.startAutoSave();
     
+    // 注册优雅关闭处理
+    this.registerShutdownHandlers();
+    
     // 添加启动日志
     console.log(`📁 日志持久化已启用，日志目录: ${this.logDir}`);
+    console.log(`📝 日志配置: 内存保留${this.maxLogs}条，文件全量保存，保留${this.MAX_LOG_FILES}天`);
   }
   
   /**
@@ -55,7 +61,7 @@ class Logger {
   }
   
   /**
-   * 加载历史日志
+   * 加载历史日志（只加载最近的部分到内存）
    */
   private async loadHistoricalLogs() {
     try {
@@ -64,7 +70,11 @@ class Logger {
         const content = await fs.readFile(this.currentLogFile, 'utf-8');
         const lines = content.split('\n').filter(line => line.trim());
         
-        for (const line of lines) {
+        // 只加载最后 maxLogs 条到内存
+        const startIdx = Math.max(0, lines.length - this.maxLogs);
+        const recentLines = lines.slice(startIdx);
+        
+        for (const line of recentLines) {
           try {
             const logEntry = JSON.parse(line) as LogEntry;
             this.logs.push(logEntry);
@@ -73,12 +83,7 @@ class Logger {
           }
         }
         
-        console.log(`📂 从文件加载了 ${this.logs.length} 条历史日志`);
-        
-        // 限制日志数量
-        if (this.logs.length > this.maxLogs) {
-          this.logs = this.logs.slice(-this.maxLogs);
-        }
+        console.log(`📂 从文件加载了 ${this.logs.length} 条最近日志（文件共${lines.length}条）`);
       }
     } catch (error) {
       console.error('加载历史日志失败:', error);
@@ -86,25 +91,48 @@ class Logger {
   }
   
   /**
-   * 保存日志到文件
+   * 保存日志到文件（追加模式，只保存新增的日志）
    */
   private async saveLogsToFile() {
     try {
+      // 如果没有未保存的日志，直接返回
+      if (this.unsavedLogs.length === 0) {
+        return;
+      }
+      
       // 检查是否需要切换日志文件（新的一天）
       const newLogFile = this.getLogFileName();
-      if (newLogFile !== this.currentLogFile) {
+      const isNewDay = newLogFile !== this.currentLogFile;
+      
+      if (isNewDay) {
+        // 先保存当前未保存的日志到旧文件
+        if (this.unsavedLogs.length > 0) {
+          const logLines = this.unsavedLogs.map(log => JSON.stringify(log)).join('\n') + '\n';
+          await fs.appendFile(this.currentLogFile, logLines, 'utf-8');
+          this.unsavedLogs = [];
+        }
+        
+        // 切换到新文件
         this.currentLogFile = newLogFile;
         console.log(`🔄 切换到新的日志文件: ${path.basename(this.currentLogFile)}`);
         
         // 清理旧日志文件
         await this.cleanupOldLogs();
+        return;
       }
       
-      // 只保存最近的日志（避免文件过大）
-      const logsToSave = this.logs.slice(-500); // 保存最近500条
+      // 批量追加未保存的日志到文件
+      const logsToSave = [...this.unsavedLogs];
+      const logLines = logsToSave.map(log => JSON.stringify(log)).join('\n') + '\n';
       
-      const logLines = logsToSave.map(log => JSON.stringify(log)).join('\n');
-      await fs.writeFile(this.currentLogFile, logLines + '\n', 'utf-8');
+      await fs.appendFile(this.currentLogFile, logLines, 'utf-8');
+      
+      // 清空未保存队列
+      this.unsavedLogs = [];
+      
+      if (!this.isShuttingDown && logsToSave.length > 0) {
+        console.log(`💾 已保存 ${logsToSave.length} 条日志到文件`);
+      }
       
     } catch (error) {
       console.error('保存日志到文件失败:', error);
@@ -152,6 +180,32 @@ class Logger {
       clearInterval(this.saveInterval);
       this.saveInterval = null;
     }
+  }
+  
+  /**
+   * 注册优雅关闭处理
+   */
+  private registerShutdownHandlers() {
+    const shutdownHandler = async () => {
+      if (this.isShuttingDown) return;
+      
+      this.isShuttingDown = true;
+      console.log('🛑 正在关闭日志系统，保存未保存的日志...');
+      
+      // 停止定期保存
+      this.stopAutoSave();
+      
+      // 保存所有未保存的日志
+      await this.saveLogsToFile();
+      
+      console.log('✅ 日志系统已安全关闭');
+    };
+    
+    // 监听各种退出信号
+    process.on('beforeExit', shutdownHandler);
+    process.on('SIGINT', shutdownHandler);
+    process.on('SIGTERM', shutdownHandler);
+    process.on('SIGHUP', shutdownHandler);
   }
   
   /**
@@ -221,9 +275,13 @@ class Logger {
         source: this.getCallerSource(),
       };
       
-      this.logs.unshift(logEntry); // 最新的日志在前面
+      // 添加到内存日志队列（最新的在前面）
+      this.logs.unshift(logEntry);
       
-      // 限制日志数量
+      // 添加到未保存队列（保持时间顺序，用于追加到文件）
+      this.unsavedLogs.push(logEntry);
+      
+      // 限制内存中的日志数量
       if (this.logs.length > this.maxLogs) {
         this.logs = this.logs.slice(0, this.maxLogs);
       }
