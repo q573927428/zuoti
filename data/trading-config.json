@@ -10,7 +10,7 @@
     ],
     "investmentAmount": 100,
     "amplitudeThreshold": 1,
-    "trendThreshold": 6,
+    "trendThreshold": 10,
     "orderTimeout": {
       "default": 7200000,
       "buy": 3600000,
@@ -61,18 +61,16 @@
     "tradeInterval": 600000
   },
   "stats": {
-    "totalTrades": 22,
-    "successfulTrades": 6,
-    "failedTrades": 17,
-    "totalProfit": -3.7299999999999995,
-    "totalProfitRate": -0.6216666666666666,
-    "annualizedReturn": -75.6361111111111,
+    "totalTrades": 1,
+    "successfulTrades": 0,
+    "failedTrades": 0,
+    "totalProfit": 0,
+    "totalProfitRate": 0,
+    "annualizedReturn": 0,
     "currentDate": "2026-01-21",
     "tradedSymbols": {
-      "ETH/USDT": 2,
-      "BNB/USDT": 1,
-      "BTC/USDT": 4
+      "BNB/USDT": 2
     }
   },
-  "lastSaved": 1768969838794
+  "lastSaved": 1768997099696
 }
