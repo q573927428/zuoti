@@ -699,10 +699,11 @@ let aiServiceInstance: AIAnalysisService | null = null
 
 export function getAIAnalysisService(): AIAnalysisService {
   if (!aiServiceInstance) {
-    // 在Nuxt环境中，我们需要在事件处理程序中使用useRuntimeConfig
-    // 这里我们改为从环境变量直接读取
-    const apiKey = process.env.DEEPSEEK_API_KEY
-    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com'
+    // 使用useRuntimeConfig()读取配置，与binance.ts保持一致
+    const config = useRuntimeConfig()
+    
+    const apiKey = config.deepseekApiKey
+    const apiUrl = config.deepseekApiUrl || 'https://api.deepseek.com'
     
     if (!apiKey) {
       throw new Error('DeepSeek API密钥未配置，请设置DEEPSEEK_API_KEY环境变量')

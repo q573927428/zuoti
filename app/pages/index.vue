@@ -190,10 +190,6 @@
                 <el-button type="primary" size="small" @click="refreshAnalysis" :loading="loading">
                   刷新分析
                 </el-button>
-                <!-- 新增AI分析测试按钮 -->
-                <el-button type="success" size="small" @click="testAIAnalysis" :loading="testingAI">
-                  🤖 AI分析测试
-                </el-button>
               </div>
             </div>
           </template>
