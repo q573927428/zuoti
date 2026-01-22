@@ -23,7 +23,7 @@ export class AIAnalysisService {
    */
   async analyzeSymbol(symbol: TradingSymbol, marketData?: any): Promise<AIAnalysisResult> {
     // 检查缓存
-    const cacheKey = `${symbol}_${Date.now() - (Date.now() % (10 * 60 * 1000))}` // 10分钟粒度
+    const cacheKey = `${symbol}_${Date.now() - (Date.now() % this.cacheDuration)}`
     const cached = analysisCache.get(cacheKey)
     
     if (cached && cached.expiresAt > Date.now()) {
@@ -44,7 +44,7 @@ export class AIAnalysisService {
       const analysis = await this.callDeepSeekAPI(prompt)
       
       // 解析AI响应
-      const result = this.parseAIResponse(symbol, analysis)
+      const result = this.parseAIResponse(symbol, analysis, marketData)
       
       // 缓存结果
       analysisCache.set(cacheKey, result)
@@ -75,6 +75,9 @@ export class AIAnalysisService {
         volumeAnalysis
       } = marketData
       
+      // 计算技术指标强度评分
+      const technicalStrength = this.calculateTechnicalStrength(technicalIndicators, priceChanges)
+      
       return `你是一个专业的加密货币交易分析师。请基于以下市场数据进行分析：
 
 交易对: ${symbol}
@@ -82,42 +85,50 @@ export class AIAnalysisService {
 当前价格: ${currentPrice.toFixed(2)} USDT
 
 价格变化:
-- 1小时: ${priceChanges['1h'].toFixed(2)}%
-- 4小时: ${priceChanges['4h'].toFixed(2)}%
-- 24小时: ${priceChanges['24h'].toFixed(2)}%
+- 1小时: ${priceChanges['1h'].toFixed(2)}% ${this.getPriceChangeEmoji(priceChanges['1h'])}
+- 4小时: ${priceChanges['4h'].toFixed(2)}% ${this.getPriceChangeEmoji(priceChanges['4h'])}
+- 24小时: ${priceChanges['24h'].toFixed(2)}% ${this.getPriceChangeEmoji(priceChanges['24h'])}
 
 技术指标:
 移动平均线 (15分钟):
 - MA7: ${technicalIndicators.movingAverages['15m'].ma7.toFixed(2)}
 - MA25: ${technicalIndicators.movingAverages['15m'].ma25.toFixed(2)}
-- 趋势: ${technicalIndicators.movingAverages['15m'].trend}
+- 趋势: ${technicalIndicators.movingAverages['15m'].trend} ${this.getTrendEmoji(technicalIndicators.movingAverages['15m'].trend)}
+- 金叉/死叉: ${technicalIndicators.movingAverages['15m'].ma7 > technicalIndicators.movingAverages['15m'].ma25 ? '金叉(看涨)' : '死叉(看跌)'}
 
 移动平均线 (1小时):
 - MA7: ${technicalIndicators.movingAverages['1h'].ma7.toFixed(2)}
 - MA25: ${technicalIndicators.movingAverages['1h'].ma25.toFixed(2)}
-- 趋势: ${technicalIndicators.movingAverages['1h'].trend}
+- 趋势: ${technicalIndicators.movingAverages['1h'].trend} ${this.getTrendEmoji(technicalIndicators.movingAverages['1h'].trend)}
+- 金叉/死叉: ${technicalIndicators.movingAverages['1h'].ma7 > technicalIndicators.movingAverages['1h'].ma25 ? '金叉(看涨)' : '死叉(看跌)'}
 
 RSI指标:
-- 15分钟RSI: ${technicalIndicators.rsi['15m'].toFixed(2)}
-- 1小时RSI: ${technicalIndicators.rsi['1h'].toFixed(2)}
+- 15分钟RSI: ${technicalIndicators.rsi['15m'].toFixed(2)} ${this.getRSIStatus(technicalIndicators.rsi['15m'])}
+- 1小时RSI: ${technicalIndicators.rsi['1h'].toFixed(2)} ${this.getRSIStatus(technicalIndicators.rsi['1h'])}
 
 支撑位/阻力位:
 - 支撑位: ${technicalIndicators.supportResistance.support.toFixed(2)}
 - 阻力位: ${technicalIndicators.supportResistance.resistance.toFixed(2)}
+- 当前价格位置: ${this.getPricePosition(currentPrice, technicalIndicators.supportResistance.support, technicalIndicators.supportResistance.resistance)}
 
 成交量分析:
 - 15分钟平均成交量: ${volumeAnalysis.averageVolume['15m'].toFixed(2)}
 - 1小时平均成交量: ${volumeAnalysis.averageVolume['1h'].toFixed(2)}
-- 成交量变化: ${volumeAnalysis.volumeChange15m.toFixed(2)}%
-- 成交量趋势: ${volumeAnalysis.volumeTrend}
+- 成交量变化: ${volumeAnalysis.volumeChange15m.toFixed(2)}% ${this.getVolumeChangeEmoji(volumeAnalysis.volumeChange15m)}
+- 成交量趋势: ${volumeAnalysis.volumeTrend} ${this.getVolumeTrendEmoji(volumeAnalysis.volumeTrend)}
+
+技术指标综合强度: ${technicalStrength}/100
 
 分析要求:
 1. 基于以上技术指标、价格走势和成交量分析给出交易建议
 2. 建议必须是以下之一: BUY(买入), SELL(卖出), HOLD(持有), AVOID(避免交易)
-3. 提供置信度(0-100%)
+3. 提供置信度(0-100%) - 请根据技术指标强度、市场趋势和风险因素给出差异化的置信度，不要总是使用相同的数值
 4. 评估风险等级: LOW(低), MEDIUM(中), HIGH(高)
-5. 详细说明分析理由，包括技术指标解读
+5. 详细说明分析理由，包括技术指标解读和风险因素分析
 6. 评估市场情绪: BULLISH(看涨), BEARISH(看跌), NEUTRAL(中性)
+7. 考虑${symbol}的特定市场特性（如波动性、流动性、市场地位等）
+
+重要提示: 请确保置信度反映真实的分析确定性，不要默认使用65%。如果市场信号明确，可以给较高置信度(70-90%)；如果市场矛盾或不确定，可以给较低置信度(40-60%)。
 
 请以JSON格式返回分析结果，包含以下字段:
 - recommendation: 交易建议
@@ -145,10 +156,11 @@ RSI指标:
 分析要求:
 1. 基于技术分析、市场情绪和风险管理给出交易建议
 2. 建议必须是以下之一: BUY(买入), SELL(卖出), HOLD(持有), AVOID(避免交易)
-3. 提供置信度(0-100%)
+3. 提供置信度(0-100%) - 请根据分析给出差异化的置信度
 4. 评估风险等级: LOW(低), MEDIUM(中), HIGH(高)
 5. 简要说明分析理由
 6. 评估市场情绪: BULLISH(看涨), BEARISH(看跌), NEUTRAL(中性)
+7. 考虑${symbol}的特定市场特性
 
 请以JSON格式返回分析结果，包含以下字段:
 - recommendation: 交易建议
@@ -238,6 +250,19 @@ RSI指标:
             srScore: details.srScore,
             finalConfidence
           }
+          
+          // 添加详细的诊断日志
+          console.log(`🔍 AI分析诊断 - ${symbol}:`)
+          console.log(`   AI原始置信度: ${aiConfidence}%`)
+          console.log(`   本地技术指标置信度: ${localConfidence}%`)
+          console.log(`   价格变化评分: ${details.priceScore}`)
+          console.log(`   移动平均线评分: ${details.maScore}`)
+          console.log(`   RSI评分: ${details.rsiScore}`)
+          console.log(`   成交量评分: ${details.volumeScore}`)
+          console.log(`   支撑阻力评分: ${details.srScore}`)
+          console.log(`   最终置信度: ${finalConfidence}% (AI:${aiConfidence}×0.6 + 本地:${localConfidence}×0.4)`)
+        } else {
+          console.log(`🔍 AI分析诊断 - ${symbol}: 无市场数据，使用AI原始置信度: ${aiConfidence}%`)
         }
         
         return {
@@ -329,9 +354,9 @@ RSI指标:
       console.log(`📊 获取市场数据: ${symbol}`)
       
       // 获取多个时间框架的K线数据
-      const klines15m = await fetchKlines(symbol, '15m', 24) // 最近6小时
+      const klines15m = await fetchKlines(symbol, '15m', 48) // 最近12小时
       const klines1h = await fetchKlines(symbol, '1h', 24)   // 最近24小时
-      const klines4h = await fetchKlines(symbol, '4h', 24)   // 最近4天
+      const klines4h = await fetchKlines(symbol, '4h',12)   // 最近2天
       
       if (klines15m.length === 0 || klines1h.length === 0 || klines4h.length === 0) {
         throw new Error(`无法获取 ${symbol} 的市场数据`)
@@ -689,6 +714,180 @@ RSI指标:
       size: analysisCache.size,
       hits: 0 // 可以添加命中统计逻辑
     }
+  }
+
+  /**
+   * 计算技术指标强度
+   */
+  private calculateTechnicalStrength(technicalIndicators: any, priceChanges: any): number {
+    let strength = 50 // 基础分
+    
+    // 1. 移动平均线趋势评分
+    const maTrend15m = technicalIndicators.movingAverages['15m'].trend === 'BULLISH' ? 10 : -5
+    const maTrend1h = technicalIndicators.movingAverages['1h'].trend === 'BULLISH' ? 15 : -10
+    strength += maTrend15m + maTrend1h
+    
+    // 2. RSI评分
+    const rsi15m = technicalIndicators.rsi['15m']
+    const rsi1h = technicalIndicators.rsi['1h']
+    const rsiScore = this.calculateRSIScore(rsi15m, rsi1h)
+    strength += rsiScore
+    
+    // 3. 价格变化评分
+    const priceScore = this.calculatePriceChangeScore(priceChanges)
+    strength += priceScore
+    
+    // 4. 均线排列评分
+    const maAlignmentScore = this.calculateMAAlignmentScore(technicalIndicators.movingAverages)
+    strength += maAlignmentScore
+    
+    return Math.min(100, Math.max(0, strength))
+  }
+
+  /**
+   * 计算RSI评分
+   */
+  private calculateRSIScore(rsi15m: number, rsi1h: number): number {
+    let score = 0
+    
+    // 15分钟RSI
+    if (rsi15m > 70) score -= 5 // 超买
+    else if (rsi15m < 30) score += 5 // 超卖
+    else if (rsi15m > 50 && rsi15m < 70) score += 3 // 健康上涨
+    else if (rsi15m > 30 && rsi15m < 50) score -= 2 // 弱势
+    
+    // 1小时RSI
+    if (rsi1h > 70) score -= 8 // 超买
+    else if (rsi1h < 30) score += 8 // 超卖
+    else if (rsi1h > 50 && rsi1h < 70) score += 5 // 健康上涨
+    else if (rsi1h > 30 && rsi1h < 50) score -= 3 // 弱势
+    
+    return score
+  }
+
+  /**
+   * 计算价格变化评分
+   */
+  private calculatePriceChangeScore(priceChanges: any): number {
+    let score = 0
+    
+    // 1小时变化
+    if (priceChanges['1h'] > 2) score += 10
+    else if (priceChanges['1h'] > 1) score += 5
+    else if (priceChanges['1h'] < -2) score -= 10
+    else if (priceChanges['1h'] < -1) score -= 5
+    
+    // 4小时变化
+    if (priceChanges['4h'] > 5) score += 15
+    else if (priceChanges['4h'] > 2) score += 8
+    else if (priceChanges['4h'] < -5) score -= 15
+    else if (priceChanges['4h'] < -2) score -= 8
+    
+    // 24小时变化
+    if (priceChanges['24h'] > 10) score += 20
+    else if (priceChanges['24h'] > 5) score += 10
+    else if (priceChanges['24h'] < -10) score -= 20
+    else if (priceChanges['24h'] < -5) score -= 10
+    
+    return score
+  }
+
+  /**
+   * 计算均线排列评分
+   */
+  private calculateMAAlignmentScore(movingAverages: any): number {
+    let score = 0
+    
+    const ma7_15m = movingAverages['15m'].ma7
+    const ma25_15m = movingAverages['15m'].ma25
+    const ma7_1h = movingAverages['1h'].ma7
+    const ma25_1h = movingAverages['1h'].ma25
+    
+    // 均线多头排列（短期>长期）
+    if (ma7_15m > ma25_15m && ma7_1h > ma25_1h) {
+      score += 20
+    }
+    // 均线空头排列（短期<长期）
+    else if (ma7_15m < ma25_15m && ma7_1h < ma25_1h) {
+      score -= 15
+    }
+    // 均线纠结
+    else {
+      const diff15m = Math.abs(ma7_15m - ma25_15m) / ma25_15m
+      const diff1h = Math.abs(ma7_1h - ma25_1h) / ma25_1h
+      
+      if (diff15m < 0.01 && diff1h < 0.01) {
+        score -= 5 // 均线高度纠结
+      }
+    }
+    
+    return score
+  }
+
+  /**
+   * 获取价格变化表情符号
+   */
+  private getPriceChangeEmoji(change: number): string {
+    if (change > 5) return '🚀'
+    if (change > 2) return '📈'
+    if (change > 0.5) return '↗️'
+    if (change > -0.5) return '➡️'
+    if (change > -2) return '↘️'
+    if (change > -5) return '📉'
+    return '💥'
+  }
+
+  /**
+   * 获取趋势表情符号
+   */
+  private getTrendEmoji(trend: string): string {
+    return trend === 'BULLISH' ? '🐂' : '🐻'
+  }
+
+  /**
+   * 获取RSI状态
+   */
+  private getRSIStatus(rsi: number): string {
+    if (rsi > 70) return '🔥 超买'
+    if (rsi < 30) return '❄️ 超卖'
+    if (rsi > 50) return '✅ 看涨'
+    return '⚠️ 看跌'
+  }
+
+  /**
+   * 获取价格位置
+   */
+  private getPricePosition(currentPrice: number, support: number, resistance: number): string {
+    const range = resistance - support
+    if (range <= 0) return '未知'
+    
+    const position = (currentPrice - support) / range * 100
+    
+    if (position < 20) return `📈 接近支撑位 (${position.toFixed(1)}%)`
+    if (position > 80) return `📉 接近阻力位 (${position.toFixed(1)}%)`
+    if (position > 40 && position < 60) return `⚖️ 中间区域 (${position.toFixed(1)}%)`
+    
+    return `${position.toFixed(1)}%`
+  }
+
+  /**
+   * 获取成交量变化表情符号
+   */
+  private getVolumeChangeEmoji(change: number): string {
+    if (change > 50) return '📊📈'
+    if (change > 20) return '📊↗️'
+    if (change > -20) return '📊➡️'
+    if (change > -50) return '📊↘️'
+    return '📊📉'
+  }
+
+  /**
+   * 获取成交量趋势表情符号
+   */
+  private getVolumeTrendEmoji(trend: string): string {
+    if (trend === 'INCREASING') return '📈'
+    if (trend === 'DECREASING') return '📉'
+    return '➡️'
   }
 }
 

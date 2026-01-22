@@ -75,9 +75,9 @@ export class DataManager {
         },
         scoreThreshold: 60,
         lookbackPeriods: {
-          '15m': 24,
+          '15m': 48,
           '1h': 24,
-          '4h': 24
+          '4h': 12
         }
       },
       
