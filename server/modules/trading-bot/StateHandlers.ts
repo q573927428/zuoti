@@ -82,11 +82,9 @@ export class StateHandlers {
       const aiService = getAIAnalysisService()
       const analysis = await aiService.analyzeSymbol(symbol)
       
-      console.log(`🤖 AI分析结果: ${symbol}`)
-      console.log(`   - 推荐: ${analysis.recommendation}`)
-      console.log(`   - 置信度: ${analysis.confidence}%`)
-      console.log(`   - 风险等级: ${analysis.riskLevel}`)
-      console.log(`   - 市场情绪: ${analysis.marketSentiment}`)
+      console.log(
+        `🤖 AI分析结果: ${symbol} | 推荐: ${analysis.recommendation} | 置信度: ${analysis.confidence}% | 风险等级: ${analysis.riskLevel} | 市场情绪: ${analysis.marketSentiment}`
+      );
       console.log(`   - 理由: ${analysis.reasoning}`)
       
       // 检查是否通过AI分析
