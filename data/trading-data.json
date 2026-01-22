@@ -1,20 +1,30 @@
 {
   "tradingStatus": {
-    "state": "BUY_ORDER_PLACED",
+    "state": "SELL_ORDER_PLACED",
     "symbol": "ETH/USDT",
-    "currentTradeId": "trade_1769062017785",
+    "currentTradeId": "trade_1769065678622",
     "buyOrder": {
-      "orderId": "42007960788",
+      "orderId": "42009362458",
       "symbol": "ETH/USDT",
       "side": "buy",
-      "price": 2995.06,
-      "amount": 0.0333,
-      "status": "open",
-      "createdAt": 1769062017785
+      "price": 3003.62,
+      "amount": 0.0332,
+      "status": "closed",
+      "createdAt": 1769065678622,
+      "filledAt": 1769068497665
     },
-    "high": 3038.33,
-    "low": 2990.26,
-    "lastUpdateTime": 1769062017785
+    "high": 3030.82,
+    "low": 2992.5,
+    "lastUpdateTime": 1769077890173,
+    "sellOrder": {
+      "orderId": "42013437361",
+      "symbol": "ETH/USDT",
+      "side": "sell",
+      "price": 3024.36,
+      "amount": 0.0332,
+      "status": "open",
+      "createdAt": 1769077919233
+    }
   },
   "tradeRecords": [
     {
@@ -46,14 +56,16 @@
       "endTime": 1769024297355
     },
     {
-      "id": "trade_1769062017785",
+      "id": "trade_1769065678622",
       "symbol": "ETH/USDT",
-      "buyOrderId": "42007960788",
-      "buyPrice": 2995.06,
-      "amount": 0.0333,
-      "startTime": 1769062017785,
-      "status": "in_progress"
+      "buyOrderId": "42009362458",
+      "buyPrice": 3003.62,
+      "amount": 0.0332,
+      "startTime": 1769065678622,
+      "status": "in_progress",
+      "sellOrderId": "42013437361",
+      "sellPrice": 3024.36
     }
   ],
-  "lastSaved": 1769062017786
+  "lastSaved": 1769077919234
 }
