@@ -25,8 +25,8 @@
       "priceVolatilityThreshold": 10
     },
     "dailyReset": {
-      "processingTime": "23:00",
-      "warningTime": "22:30",
+      "processingTime": "23:30",
+      "warningTime": "23:00",
       "forceLiquidationDiscount": 0.999
     },
     "stopLoss": {
@@ -58,7 +58,16 @@
       }
     },
     "dailyTradeLimit": 3,
-    "tradeInterval": 600000
+    "tradeInterval": 600000,
+    "ai": {
+      "enabled": true,
+      "analysisInterval": 86400000,
+      "minConfidence": 60,
+      "maxRiskLevel": "MEDIUM",
+      "useForBuyDecisions": true,
+      "useForSellDecisions": true,
+      "cacheDuration": 1800000
+    }
   },
   "stats": {
     "totalTrades": 1,
@@ -67,10 +76,8 @@
     "totalProfit": 0,
     "totalProfitRate": 0,
     "annualizedReturn": 0,
-    "currentDate": "2026-01-21",
-    "tradedSymbols": {
-      "BNB/USDT": 2
-    }
+    "currentDate": "2026-01-22",
+    "tradedSymbols": {}
   },
-  "lastSaved": 1768998700984
+  "lastSaved": 1769063478123
 }

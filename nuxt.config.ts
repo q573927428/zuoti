@@ -19,6 +19,8 @@ export default defineNuxtConfig({
     // 服务端环境变量
     binanceApiKey: process.env.BINANCE_API_KEY,
     binanceSecret: process.env.BINANCE_SECRET,
+    deepseekApiKey: process.env.DEEPSEEK_API_KEY,
+    deepseekApiUrl: process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com',
     public: {
       // 客户端可访问的环境变量
     }

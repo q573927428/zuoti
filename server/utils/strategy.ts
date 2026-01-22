@@ -11,14 +11,14 @@ export async function analyzeAmplitude(
   priceRangeRatio: number = 0.1
 ): Promise<AmplitudeAnalysis> {
   try {
-    // 获取最近6小时（24根15分钟K线）
-    const klines = await fetchKlines(symbol, '15m', 24)
+    // 获取最近12小时（48根15分钟K线）
+    const klines = await fetchKlines(symbol, '15m', 48)
     
     if (klines.length === 0) {
       throw new Error(`无法获取${symbol}的K线数据`)
     }
 
-    // 计算6小时内的最高价和最低价
+    // 计算12小时内的最高价和最低价
     const high = Math.max(...klines.map(k => k.high))
     const low = Math.min(...klines.map(k => k.low))
     

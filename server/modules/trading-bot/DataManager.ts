@@ -19,9 +19,9 @@ export class DataManager {
       isTestnet: false,        // 是否使用币安测试网
       isAutoTrading: true,    // 是否开启自动交易主开关
       symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT'] as TradingSymbol[],
-      investmentAmount: 20,   // 单次交易的投入金额（USDT
+      investmentAmount: 100,   // 单次交易的投入金额（USDT
       amplitudeThreshold: 2.0,  // 价格振幅阈值（%）
-      trendThreshold: 5.0,      // 趋势强度阈值（%）
+      trendThreshold: 10.0,      // 趋势强度阈值（%）
       
       // 订单超时配置
       orderTimeout: {
@@ -42,8 +42,8 @@ export class DataManager {
       
       // 日切配置
       dailyReset: {
-        processingTime: '23:00',        // 23:00开始日切处理
-        warningTime: '22:30',           // 22:30开始预警
+        processingTime: '23:30',        // 23:30开始日切处理
+        warningTime: '23:00',           // 23:00开始预警
         forceLiquidationDiscount: 0.999, // 强平价格折扣
       },
       
@@ -73,7 +73,7 @@ export class DataManager {
           '1h': 0.35,
           '4h': 0.25
         },
-        scoreThreshold: 70,
+        scoreThreshold: 60,
         lookbackPeriods: {
           '15m': 24,
           '1h': 24,
@@ -84,6 +84,15 @@ export class DataManager {
       // 交易次数和间隔配置
       dailyTradeLimit: 3,                    // 每日交易次数限制
       tradeInterval: 60 * 60 * 1000,         // 交易间隔时间（1小时）
+      ai: {
+        enabled: true,
+        analysisInterval: 86400000,
+        minConfidence: 60,
+        maxRiskLevel: "MEDIUM",
+        useForBuyDecisions: true,
+        useForSellDecisions: true,
+        cacheDuration: 1800000
+      }
     }
   }
   

@@ -1,8 +1,9 @@
-import type { TradingStatus, TradeRecord, SystemStats, SystemConfig, TradingSymbol } from '../../../types/trading'
+import type { TradingStatus, TradeRecord, SystemStats, SystemConfig, TradingSymbol, AIAnalysisResult } from '../../../types/trading'
 import { OrderManager } from './OrderManager'
 import { getCurrentDate, getDateFromTimestamp } from '../../utils/date'
 import { findBestTradingSymbol, findBestTradingSymbolMultiTimeframe, calculateBuyAmount, calculateProfit, checkProtection, checkOrderTimeout } from '../../utils/strategy'
 import { fetchBalance, getBinanceInstance } from '../../utils/binance'
+import { getAIAnalysisService } from '../../utils/ai-analysis'
 
 /**
  * 状态处理器 - 负责各个交易状态的处理逻辑
@@ -58,6 +59,82 @@ export class StateHandlers {
     
     // 如果当前时间 >= 日切时间，则在日切时段
     return currentTime >= resetTime
+  }
+
+  /**
+   * 检查AI分析是否通过
+   */
+  private async checkAIAnalysis(symbol: TradingSymbol, action: 'buy' | 'sell'): Promise<boolean> {
+    // 如果AI分析未启用，直接返回true
+    if (!this.config.ai.enabled) {
+      return true
+    }
+    
+    // 检查是否用于当前决策
+    if (action === 'buy' && !this.config.ai.useForBuyDecisions) {
+      return true
+    }
+    if (action === 'sell' && !this.config.ai.useForSellDecisions) {
+      return true
+    }
+    
+    try {
+      const aiService = getAIAnalysisService()
+      const analysis = await aiService.analyzeSymbol(symbol)
+      
+      console.log(`🤖 AI分析结果: ${symbol}`)
+      console.log(`   - 推荐: ${analysis.recommendation}`)
+      console.log(`   - 置信度: ${analysis.confidence}%`)
+      console.log(`   - 风险等级: ${analysis.riskLevel}`)
+      console.log(`   - 市场情绪: ${analysis.marketSentiment}`)
+      console.log(`   - 理由: ${analysis.reasoning}`)
+      
+      // 检查是否通过AI分析
+      const isPassed = this.evaluateAIAnalysis(analysis, action)
+      
+      if (isPassed) {
+        console.log(`✅ AI分析通过: ${symbol} - ${action.toUpperCase()} 操作获得AI支持`)
+      } else {
+        console.log(`❌ AI分析未通过: ${symbol} - ${action.toUpperCase()} 操作未获得AI支持`)
+      }
+      
+      return isPassed
+    } catch (error) {
+      console.error(`⚠️ AI分析失败，继续执行原有逻辑:`, error)
+      return true // AI分析失败时，继续执行原有逻辑
+    }
+  }
+  
+  /**
+   * 评估AI分析结果
+   */
+  private evaluateAIAnalysis(analysis: AIAnalysisResult, action: 'buy' | 'sell'): boolean {
+    // 检查置信度阈值
+    if (analysis.confidence < this.config.ai.minConfidence) {
+      console.log(`⚠️ 置信度 ${analysis.confidence}% 低于阈值 ${this.config.ai.minConfidence}%`)
+      return false
+    }
+    
+    // 检查风险等级
+    const riskLevels = { LOW: 1, MEDIUM: 2, HIGH: 3 }
+    const maxRiskLevel = riskLevels[this.config.ai.maxRiskLevel]
+    const currentRiskLevel = riskLevels[analysis.riskLevel]
+    
+    if (currentRiskLevel > maxRiskLevel) {
+      console.log(`⚠️ 风险等级 ${analysis.riskLevel} 高于允许的最大风险 ${this.config.ai.maxRiskLevel}`)
+      return false
+    }
+    
+    // 检查交易建议
+    if (action === 'buy') {
+      // 买入操作需要BUY或HOLD建议
+      return analysis.recommendation === 'BUY' || analysis.recommendation === 'HOLD'
+    } else if (action === 'sell') {
+      // 卖出操作需要SELL或HOLD建议
+      return analysis.recommendation === 'SELL' || analysis.recommendation === 'HOLD'
+    }
+    
+    return false
   }
 
   /**
@@ -153,6 +230,13 @@ export class StateHandlers {
     
     if (!result.bestSymbol) {
       console.log('💤 未找到符合条件的交易机会')
+      return tradingStatus
+    }
+    
+    // AI分析确认
+    const aiPassed = await this.checkAIAnalysis(bestSymbolData.symbol, 'buy')
+    if (!aiPassed) {
+      console.log('⏸️ AI分析未通过，暂停交易')
       return tradingStatus
     }
     
@@ -579,6 +663,13 @@ export class StateHandlers {
     
     if (!result.bestSymbol) {
       console.log('⏳ 无法获取卖出价格，等待下次循环')
+      return tradingStatus
+    }
+    
+    // AI分析确认
+    const aiPassed = await this.checkAIAnalysis(tradingStatus.symbol, 'sell')
+    if (!aiPassed) {
+      console.log('⏸️ AI分析未通过，暂停卖出操作')
       return tradingStatus
     }
     

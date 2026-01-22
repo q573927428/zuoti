@@ -1,30 +1,20 @@
 {
   "tradingStatus": {
-    "state": "SELL_ORDER_PLACED",
-    "symbol": "BNB/USDT",
-    "currentTradeId": "trade_1768978874800",
+    "state": "BUY_ORDER_PLACED",
+    "symbol": "ETH/USDT",
+    "currentTradeId": "trade_1769062017785",
     "buyOrder": {
-      "orderId": "10814907699",
-      "symbol": "BNB/USDT",
+      "orderId": "42007960788",
+      "symbol": "ETH/USDT",
       "side": "buy",
-      "price": 877.5,
-      "amount": 0.113,
-      "status": "closed",
-      "createdAt": 1768978874800,
-      "filledAt": 1768978932763
-    },
-    "high": 882.36,
-    "low": 864.54,
-    "lastUpdateTime": 1768998140844,
-    "sellOrder": {
-      "orderId": "10816732774",
-      "symbol": "BNB/USDT",
-      "side": "sell",
-      "price": 878.796,
-      "amount": 0.113,
+      "price": 2995.06,
+      "amount": 0.0333,
       "status": "open",
-      "createdAt": 1768998170345
-    }
+      "createdAt": 1769062017785
+    },
+    "high": 3038.33,
+    "low": 2990.26,
+    "lastUpdateTime": 1769062017785
   },
   "tradeRecords": [
     {
@@ -34,10 +24,36 @@
       "buyPrice": 877.5,
       "amount": 0.113,
       "startTime": 1768978874800,
-      "status": "in_progress",
+      "status": "completed",
       "sellOrderId": "10816732774",
-      "sellPrice": 878.796
+      "sellPrice": 878.8,
+      "profit": 0.15,
+      "profitRate": 0.15,
+      "endTime": 1769004644708
+    },
+    {
+      "id": "trade_1769011217672",
+      "symbol": "SOL/USDT",
+      "buyOrderId": "16120640411",
+      "buyPrice": 126.57,
+      "amount": 0.79,
+      "startTime": 1769011217672,
+      "status": "completed",
+      "sellOrderId": "16123757413",
+      "sellPrice": 130.71,
+      "profit": 3.27,
+      "profitRate": 3.27,
+      "endTime": 1769024297355
+    },
+    {
+      "id": "trade_1769062017785",
+      "symbol": "ETH/USDT",
+      "buyOrderId": "42007960788",
+      "buyPrice": 2995.06,
+      "amount": 0.0333,
+      "startTime": 1769062017785,
+      "status": "in_progress"
     }
   ],
-  "lastSaved": 1768998700984
+  "lastSaved": 1769062017786
 }

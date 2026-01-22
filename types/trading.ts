@@ -143,6 +143,41 @@ export interface TradingParametersConfig {
   priceRangeRatio: number // 买入/卖出价格距离边界的比例（0-0.5，默认0.1）
 }
 
+// AI分析配置
+export interface AIConfig {
+  enabled: boolean // 是否启用AI分析
+  analysisInterval: number // 分析间隔（毫秒），默认10分钟
+  minConfidence: number // 最小置信度阈值（0-100）
+  maxRiskLevel: 'LOW' | 'MEDIUM' | 'HIGH' // 最大风险等级
+  useForBuyDecisions: boolean // 是否用于买入决策
+  useForSellDecisions: boolean // 是否用于卖出决策
+  cacheDuration: number // 分析结果缓存时间（毫秒）
+}
+
+// AI分析结果
+export interface AIAnalysisResult {
+  symbol: TradingSymbol
+  recommendation: 'BUY' | 'SELL' | 'HOLD' | 'AVOID'
+  confidence: number // 0-100
+  reasoning: string
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
+  suggestedPrice?: number
+  suggestedAmount?: number
+  marketSentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
+  confidenceDetails?: {
+    aiConfidence: number // AI原始置信度
+    localConfidence: number // 本地技术指标置信度
+    priceScore: number // 价格变化评分
+    maScore: number // 移动平均线评分
+    rsiScore: number // RSI评分
+    volumeScore: number // 成交量评分
+    srScore: number // 支撑阻力评分
+    finalConfidence: number // 最终置信度
+  }
+  timestamp: number
+  expiresAt: number
+}
+
 // 系统配置
 export interface SystemConfig {
   isTestnet: boolean // 是否使用模拟交易
@@ -159,6 +194,7 @@ export interface SystemConfig {
   dailyTradeLimit: number // 每日交易次数限制，0表示无限制
   tradeInterval: number // 交易间隔时间（毫秒），0表示无间隔
   multiTimeframe: MultiTimeframeConfig // 多时间框架配置
+  ai: AIConfig // AI分析配置
 }
 
 // 系统统计

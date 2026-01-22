@@ -186,9 +186,15 @@
           <template #header>
             <div class="card-header">
               <span>实时振幅分析</span>
-              <el-button type="primary" size="small" @click="refreshAnalysis" :loading="loading">
-                刷新分析
-              </el-button>
+              <div>
+                <el-button type="primary" size="small" @click="refreshAnalysis" :loading="loading">
+                  刷新分析
+                </el-button>
+                <!-- 新增AI分析测试按钮 -->
+                <el-button type="success" size="small" @click="testAIAnalysis" :loading="testingAI">
+                  🤖 AI分析测试
+                </el-button>
+              </div>
             </div>
           </template>
           <el-table :data="store.amplitudeAnalyses" stripe style="width: 100%">
@@ -362,6 +368,69 @@
               </template>
             </el-table-column>
           </el-table>
+        </el-card>
+
+        <!-- AI分析结果 -->
+        <el-card shadow="hover" class="ai-analysis-card">
+          <template #header>
+            <div class="card-header">
+              <span>🤖 AI智能分析</span>
+              <div>
+                <el-select v-model="selectedAISymbol" placeholder="选择交易对" size="small" style="width: 120px;">
+                  <el-option v-for="symbol in store.config.symbols" :key="symbol" :label="symbol" :value="symbol" />
+                </el-select>
+                <el-button type="success" size="small" @click="testAIAnalysis" :loading="testingAI">
+                  执行AI分析
+                </el-button>
+              </div>
+            </div>
+          </template>
+          
+          <!-- AI分析结果展示 -->
+          <div v-if="aiAnalysisResult" class="ai-analysis-result">
+            <el-descriptions :column="2" border>
+              <el-descriptions-item label="交易对">{{ aiAnalysisResult.symbol }}</el-descriptions-item>
+              <el-descriptions-item label="分析时间">
+                {{ new Date(aiAnalysisResult.timestamp).toLocaleString() }}
+              </el-descriptions-item>
+              <el-descriptions-item label="交易建议">
+                <el-tag :type="getRecommendationType(aiAnalysisResult.recommendation)" size="large">
+                  {{ getRecommendationText(aiAnalysisResult.recommendation) }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="置信度">
+                <el-progress 
+                  :stroke-width="20"
+                  :percentage="aiAnalysisResult.confidence" 
+                  :color="getConfidenceColor(aiAnalysisResult.confidence)"
+                  :show-text="true"
+                />
+              </el-descriptions-item>
+              <el-descriptions-item label="风险等级">
+                <el-tag :type="getRiskLevelType(aiAnalysisResult.riskLevel)" size="default">
+                  {{ aiAnalysisResult.riskLevel }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="市场情绪">
+                <el-tag :type="getSentimentType(aiAnalysisResult.marketSentiment)" size="default">
+                  {{ aiAnalysisResult.marketSentiment }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="分析理由" :span="2">
+                <div class="ai-reasoning">{{ aiAnalysisResult.reasoning }}</div>
+              </el-descriptions-item>
+              <el-descriptions-item v-if="aiAnalysisResult.suggestedPrice" label="建议价格">
+                {{ aiAnalysisResult.suggestedPrice.toFixed(2) }}
+              </el-descriptions-item>
+              <el-descriptions-item v-if="aiAnalysisResult.suggestedAmount" label="建议数量">
+                {{ aiAnalysisResult.suggestedAmount.toFixed(6) }}
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
+          
+          <div v-else class="ai-analysis-empty">
+            <el-empty description="点击'执行AI分析'按钮开始分析" />
+          </div>
         </el-card>
 
         <!-- 交易记录 -->
@@ -702,6 +771,11 @@ const resettingCircuitBreaker = ref(false)
 // 后端日志相关
 const loadingBackendLogs = ref(false)
 const clearingBackendLogs = ref(false)
+
+// AI分析相关
+const selectedAISymbol = ref(store.config.symbols[0])
+const testingAI = ref(false)
+const aiAnalysisResult = ref<any>(null)
 
 // 日志过滤
 const logFilters = ref({
@@ -1117,6 +1191,73 @@ const getLogLevelText = (level: string) => {
   }
   return textMap[level] || level
 }
+
+// AI分析测试函数
+const testAIAnalysis = async () => {
+  testingAI.value = true
+  try {
+    const result = await $fetch('/api/trading/ai-analyze', {
+      method: 'POST',
+      body: { symbol: selectedAISymbol.value }
+    }) as any
+    
+    if (result.success) {
+      aiAnalysisResult.value = result.analysis
+      ElMessage.success(`AI分析完成: ${result.analysis.recommendation} (${result.analysis.confidence}% 置信度)`)
+    } else {
+      ElMessage.error(result.error || 'AI分析失败')
+    }
+  } catch (error: any) {
+    ElMessage.error('AI分析请求失败: ' + error.message)
+  } finally {
+    testingAI.value = false
+  }
+}
+
+// 辅助函数
+const getRecommendationType = (recommendation: string) => {
+  const typeMap: Record<string, any> = {
+    'BUY': 'success',
+    'SELL': 'danger',
+    'HOLD': 'warning',
+    'AVOID': 'info'
+  }
+  return typeMap[recommendation] || 'info'
+}
+
+const getRecommendationText = (recommendation: string) => {
+  const textMap: Record<string, string> = {
+    'BUY': '买入',
+    'SELL': '卖出',
+    'HOLD': '持有',
+    'AVOID': '避免交易'
+  }
+  return textMap[recommendation] || recommendation
+}
+
+const getConfidenceColor = (confidence: number) => {
+  if (confidence >= 80) return '#67c23a'
+  if (confidence >= 60) return '#e6a23c'
+  return '#f56c6c'
+}
+
+const getRiskLevelType = (riskLevel: string) => {
+  const typeMap: Record<string, any> = {
+    'LOW': 'success',
+    'MEDIUM': 'warning',
+    'HIGH': 'danger'
+  }
+  return typeMap[riskLevel] || 'info'
+}
+
+const getSentimentType = (sentiment: string) => {
+  const typeMap: Record<string, any> = {
+    'BULLISH': 'success',
+    'BEARISH': 'danger',
+    'NEUTRAL': 'info'
+  }
+  return typeMap[sentiment] || 'info'
+}
 </script>
 
 <style scoped>
@@ -1525,5 +1666,55 @@ const getLogLevelText = (level: string) => {
   color: #606266;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+/* AI分析卡片样式 */
+.ai-analysis-card {
+  margin-bottom: 20px;
+}
+
+.ai-analysis-result {
+  padding: 10px 0;
+}
+
+.ai-reasoning {
+  padding: 10px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  line-height: 1.6;
+  color: #606266;
+  font-size: 14px;
+}
+
+.ai-analysis-empty {
+  padding: 40px 0;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .ai-analysis-card :deep(.el-descriptions) {
+    font-size: 12px;
+  }
+  
+  .ai-analysis-card :deep(.el-descriptions__label),
+  .ai-analysis-card :deep(.el-descriptions__content) {
+    padding: 8px 10px;
+  }
+  
+  .ai-reasoning {
+    font-size: 12px;
+    padding: 8px;
+  }
+  
+  .ai-analysis-card .card-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .ai-analysis-card .card-header > div {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
 }
 </style>
