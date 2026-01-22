@@ -440,12 +440,12 @@
             <el-table-column prop="symbol" label="交易对" width="120" />
             <el-table-column label="买入价" width="120">
               <template #default="{ row }">
-                {{ row.buyPrice?.toFixed(3) }}
+                {{ row.buyPrice?.toFixed(2) }}
               </template>
             </el-table-column>
             <el-table-column label="卖出价">
               <template #default="{ row }">
-                {{ row.sellPrice?.toFixed(3) || '-' }}
+                {{ row.sellPrice?.toFixed(2) || '-' }}
               </template>
             </el-table-column>
             <el-table-column label="数量">

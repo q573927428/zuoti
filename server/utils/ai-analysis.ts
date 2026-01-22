@@ -141,7 +141,7 @@ RSI指标:
 {
   "recommendation": "BUY",
   "confidence": 75,
-  "reasoning": "价格突破阻力位，移动平均线呈多头排列，RSI处于健康区间，成交量放大支持上涨趋势。",
+  "reasoning": "价格突破阻力位，移动平均线呈多头排列，RSI处于健康区间，📊成交量放大支持📈上涨趋势。",
   "riskLevel": "MEDIUM",
   "marketSentiment": "BULLISH"
 }`
@@ -253,13 +253,13 @@ RSI指标:
           
           // 添加详细的诊断日志
           console.log(`🔍 AI分析诊断 - ${symbol}:`)
-          console.log(`   AI原始置信度: ${aiConfidence}%`)
-          console.log(`   本地技术指标置信度: ${localConfidence}%`)
-          console.log(`   价格变化评分: ${details.priceScore}`)
-          console.log(`   移动平均线评分: ${details.maScore}`)
-          console.log(`   RSI评分: ${details.rsiScore}`)
-          console.log(`   成交量评分: ${details.volumeScore}`)
-          console.log(`   支撑阻力评分: ${details.srScore}`)
+          // console.log(`   AI原始置信度: ${aiConfidence}%`)
+          // console.log(`   本地技术指标置信度: ${localConfidence}%`)
+          // console.log(`   价格变化评分: ${details.priceScore}`)
+          // console.log(`   移动平均线评分: ${details.maScore}`)
+          // console.log(`   RSI评分: ${details.rsiScore}`)
+          // console.log(`   成交量评分: ${details.volumeScore}`)
+          // console.log(`   支撑阻力评分: ${details.srScore}`)
           console.log(`   最终置信度: ${finalConfidence}% (AI:${aiConfidence}×0.6 + 本地:${localConfidence}×0.4)`)
         } else {
           console.log(`🔍 AI分析诊断 - ${symbol}: 无市场数据，使用AI原始置信度: ${aiConfidence}%`)
