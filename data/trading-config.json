@@ -60,7 +60,7 @@
     "dailyTradeLimit": 3,
     "tradeInterval": 600000,
     "ai": {
-      "enabled": false,
+      "enabled": true,
       "analysisInterval": 86400000,
       "minConfidence": 60,
       "maxRiskLevel": "MEDIUM",
@@ -70,16 +70,17 @@
     }
   },
   "stats": {
-    "totalTrades": 3,
-    "successfulTrades": 2,
+    "totalTrades": 4,
+    "successfulTrades": 3,
     "failedTrades": 0,
-    "totalProfit": -2.21,
-    "totalProfitRate": -0.7599999999999999,
-    "annualizedReturn": -138.7,
+    "totalProfit": -1.22,
+    "totalProfitRate": -0.244,
+    "annualizedReturn": -44.53,
     "currentDate": "2026-01-23",
     "tradedSymbols": {
-      "ETH/USDT": 1
+      "ETH/USDT": 3,
+      "SOL/USDT": 1
     }
   },
-  "lastSaved": 1769137222621
+  "lastSaved": 1769145373315
 }
