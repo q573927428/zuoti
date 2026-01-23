@@ -70,15 +70,14 @@
     }
   },
   "stats": {
-    "totalTrades": 6,
-    "successfulTrades": 3,
+    "totalTrades": 0,
+    "successfulTrades": 0,
     "failedTrades": 0,
-    "totalProfit": -1.17,
-    "totalProfitRate": -1.95,
-    "annualizedReturn": -711.75,
+    "totalProfit": 0,
+    "totalProfitRate": 0,
+    "annualizedReturn": 0,
     "currentDate": "2026-01-23",
     "tradedSymbols": {
-      "ETH/USDT": 6
     }
   },
   "lastSaved": 1769166517298
