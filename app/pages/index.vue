@@ -157,25 +157,49 @@
               </el-descriptions-item>
               <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单价格">
                 {{ store.tradingStatus.buyOrder.price }}
+                <div style="font-size: 12px; color: #909399;">
+                  ({{ getCurrentPrice(store.tradingStatus.symbol || '') }})
+                </div>
               </el-descriptions-item>
               <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单数量">
                 {{ store.tradingStatus.buyOrder.amount }}
               </el-descriptions-item>
               <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单状态">
-                <el-tag :type="store.tradingStatus.buyOrder.status === 'closed' ? 'success' : store.tradingStatus.buyOrder.status === 'canceled' ? 'danger' : 'warning'">
+                <el-tag :type="store.tradingStatus.buyOrder.status === 'closed' ? 'success' : store.tradingStatus.buyOrder.status === 'canceled' ? 'danger' : 'warning'" style="margin-right: 10px;">
                   {{ store.tradingStatus.buyOrder.status === 'closed' ? '已成交' : store.tradingStatus.buyOrder.status === 'canceled' ? '已取消' : '进行中' }}
                 </el-tag>
+                <el-button
+                  v-if="store.tradingStatus.state === 'BUY_ORDER_PLACED' && store.tradingStatus.buyOrder"
+                  type="primary" 
+                  size="small"
+                  @click="handleMarketBuyFromStatus"
+                  :loading="marketBuying"
+                >
+                  市价买入
+                </el-button>
               </el-descriptions-item>
               <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单价格">
-                {{ store.tradingStatus.sellOrder.price }}
+                {{ store.tradingStatus.sellOrder.price }} (<span :class="unrealizedProfit >= 0 ? 'text-success' : 'text-danger'"> {{ unrealizedProfit >= 0 ? '+' : '' }}{{ unrealizedProfit.toFixed(2) }} U </span>)
+                <div style="font-size: 12px; color: #909399;">
+                  ({{ unrealizedProfitRate >= 0 ? '+' : '' }}{{ unrealizedProfitRate.toFixed(2) }}%)
+                </div>
               </el-descriptions-item>
               <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单数量">
                 {{ store.tradingStatus.sellOrder.amount }}
               </el-descriptions-item>
               <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单状态">
-                <el-tag :type="store.tradingStatus.sellOrder.status === 'closed' ? 'success' : store.tradingStatus.sellOrder.status === 'canceled' ? 'danger' : 'warning'">
+                <el-tag :type="store.tradingStatus.sellOrder.status === 'closed' ? 'success' : store.tradingStatus.sellOrder.status === 'canceled' ? 'danger' : 'warning'" style="margin-right: 10px;">
                   {{ store.tradingStatus.sellOrder.status === 'closed' ? '已成交' : store.tradingStatus.sellOrder.status === 'canceled' ? '已取消' : '进行中' }}
                 </el-tag>
+                <el-button
+                  v-if="store.tradingStatus.buyOrder && (store.tradingStatus.state === 'BOUGHT' || store.tradingStatus.state === 'SELL_ORDER_PLACED')"
+                  type="danger"
+                  size="small"
+                  :loading="marketSelling"
+                  @click="handleMarketSellFromStatus"
+                >
+                  市价卖出
+                </el-button>
               </el-descriptions-item>
             </el-descriptions>
           </div>
@@ -756,6 +780,7 @@
 
 <script setup lang="ts">
 import { useTradingStore } from '../stores/trading'
+import type { TradingSymbol } from '../../types/trading'
 
 const store = useTradingStore()
 const loading = ref(false)
@@ -767,6 +792,10 @@ const resettingCircuitBreaker = ref(false)
 // 后端日志相关
 const loadingBackendLogs = ref(false)
 const clearingBackendLogs = ref(false)
+
+// 市价买卖相关
+const marketBuying = ref(false)
+const marketSelling = ref(false)
 
 // AI分析相关
 const selectedAISymbol = ref(store.config.symbols[0])
@@ -839,6 +868,28 @@ onUnmounted(() => {
 // 添加计算属性，按开始时间倒序排列交易记录
 const sortedTradeRecords = computed(() => {
   return [...store.tradeRecords].sort((a, b) => b.startTime - a.startTime)
+})
+
+// 计算当前交易状态的未实现盈亏（基于tradingStatus）
+const unrealizedProfit = computed(() => {
+  if (!store.tradingStatus.buyOrder || !store.tradingStatus.symbol) {
+    return 0
+  }
+  const currentPrice = store.currentPrices[store.tradingStatus.symbol]
+  if (!currentPrice || !store.tradingStatus.buyOrder.price) {
+    return 0
+  }
+  return (currentPrice - store.tradingStatus.buyOrder.price) * store.tradingStatus.buyOrder.amount
+})
+
+// 计算未实现盈亏率
+const unrealizedProfitRate = computed(() => {
+  if (!store.tradingStatus.buyOrder || !store.tradingStatus.buyOrder.price || !store.tradingStatus.buyOrder.amount) {
+    return 0
+  }
+  const profit = unrealizedProfit.value
+  const cost = store.tradingStatus.buyOrder.price * store.tradingStatus.buyOrder.amount
+  return (profit / cost) * 100
 })
 
 // 刷新余额
@@ -1253,6 +1304,88 @@ const getSentimentType = (sentiment: string) => {
     'NEUTRAL': 'info'
   }
   return typeMap[sentiment] || 'info'
+}
+// 从交易状态面板市价买入
+const handleMarketBuyFromStatus = async () => {
+  if (!store.tradingStatus.buyOrder || !store.tradingStatus.symbol) {
+    ElMessage.warning('没有可用的买单信息')
+    return
+  }
+
+  try {
+    const buyOrder = store.tradingStatus.buyOrder
+
+    await ElMessageBox.confirm(
+      `确定要市价买入 ${store.tradingStatus.symbol} 吗？\n` +
+      '确认市价买入',
+      {
+        confirmButtonText: '确定买入',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    marketBuying.value = true
+    const result = await store.marketBuy(
+      store.tradingStatus.symbol, 
+      buyOrder.amount,
+      buyOrder.orderId
+    )
+    
+    if (result && result.success) {
+      ElMessage.success(`市价买入成功！成交价: ${result.order?.price || '未知'}`)
+      await store.loadPersistedData()
+    }
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error(`市价买入失败: ${error.message}`)
+    }
+  } finally {
+    marketBuying.value = false
+  }
+}
+
+// 从交易状态面板市价卖出（基于tradingStatus）
+const handleMarketSellFromStatus = async () => {
+  if (!store.tradingStatus.buyOrder || !store.tradingStatus.symbol) {
+    ElMessage.warning('没有可用的买单信息')
+    return
+  }
+
+  try {
+    const buyOrder = store.tradingStatus.buyOrder
+
+    await ElMessageBox.confirm(
+      `确定要市价卖出 ${store.tradingStatus.symbol} 吗？\n` +
+
+      '确认市价卖出',
+      {
+        confirmButtonText: '确定卖出',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    marketSelling.value = true
+    
+    // 调用市价卖出，传入可能存在的卖单ID以取消
+    const result = await store.marketSell(
+      store.tradingStatus.symbol as TradingSymbol, 
+      buyOrder.amount,
+      store.tradingStatus.sellOrder?.orderId // 如果有挂单，则取消
+    )
+    
+    if (result && result.success) {
+      ElMessage.success(`市价卖出成功！成交价: ${result.order?.price || '未知'}`)
+      await store.loadPersistedData()
+    }
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error(`市价卖出失败: ${error.message}`)
+    }
+  } finally {
+    marketSelling.value = false
+  }
 }
 </script>
 

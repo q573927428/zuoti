@@ -147,6 +147,42 @@ export async function createSellOrder(
 }
 
 /**
+ * 创建市价卖单（私有接口，需要API密钥）
+ */
+export async function createMarketSellOrder(
+  symbol: TradingSymbol,
+  amount: number
+): Promise<any> {
+  try {
+    const binance = getPrivateBinanceInstance()
+    const order = await binance.createMarketSellOrder(symbol, amount)
+    console.log(`创建市价卖单成功: ${symbol} 数量:${amount}`)
+    return order
+  } catch (error) {
+    console.error(`创建市价卖单失败: ${symbol}`, error)
+    throw error
+  }
+}
+
+/**
+ * 创建市价买单（私有接口，需要API密钥）
+ */
+export async function createMarketBuyOrder(
+  symbol: TradingSymbol,
+  amount: number
+): Promise<any> {
+  try {
+    const binance = getPrivateBinanceInstance()
+    const order = await binance.createMarketBuyOrder(symbol, amount)
+    console.log(`创建市价买单成功: ${symbol} 数量:${amount}`)
+    return order
+  } catch (error) {
+    console.error(`创建市价买单失败: ${symbol}`, error)
+    throw error
+  }
+}
+
+/**
  * 查询订单状态（私有接口，需要API密钥）
  */
 export async function fetchOrderStatus(symbol: TradingSymbol, orderId: string): Promise<any> {

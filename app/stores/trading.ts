@@ -352,6 +352,42 @@ export const useTradingStore = defineStore('trading', {
       }
     },
 
+    // 市价买入
+    async marketBuy(symbol: TradingSymbol, amount: number, cancelOrderId?: string) {
+      try {
+        const response = await $fetch('/api/trading/order/create-market-buy', {
+          method: 'POST',
+          body: { symbol, amount, cancelOrderId }
+        }) as any
+        
+        if (response.success) {
+          this.addDebugLog(`市价买入成功: ${symbol} x ${amount}, 成交价: ${response.order.price}`)
+          return { success: true, order: response.order, message: response.message }
+        }
+      } catch (error: any) {
+        this.addDebugLog(`市价买入失败: ${error.message}`)
+        throw error
+      }
+    },
+
+    // 市价卖出
+    async marketSell(symbol: TradingSymbol, amount: number, cancelOrderId?: string) {
+      try {
+        const response = await $fetch('/api/trading/order/create-market-sell', {
+          method: 'POST',
+          body: { symbol, amount, cancelOrderId }
+        }) as any
+        
+        if (response.success) {
+          this.addDebugLog(`市价卖出成功: ${symbol} x ${amount}, 成交价: ${response.order.price}`)
+          return { success: true, order: response.order, message: response.message }
+        }
+      } catch (error: any) {
+        this.addDebugLog(`市价卖出失败: ${error.message}`)
+        throw error
+      }
+    },
+
     // 计算统计数据
     calculateStats() {
       const completedTrades = this.tradeRecords.filter((r: TradeRecord) => r.status === 'completed')

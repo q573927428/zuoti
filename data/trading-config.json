@@ -8,7 +8,7 @@
       "BNB/USDT",
       "SOL/USDT"
     ],
-    "investmentAmount": 100,
+    "investmentAmount": 20,
     "amplitudeThreshold": 1,
     "trendThreshold": 10,
     "orderTimeout": {
@@ -40,7 +40,7 @@
       "partialFillThreshold": 0.9,
       "balanceSafetyBuffer": 0.05,
       "marketOrderDiscount": 0.999,
-      "priceRangeRatio": 0.2
+      "priceRangeRatio": 0.1
     },
     "multiTimeframe": {
       "enabled": true,
@@ -70,17 +70,16 @@
     }
   },
   "stats": {
-    "totalTrades": 4,
+    "totalTrades": 6,
     "successfulTrades": 3,
     "failedTrades": 0,
-    "totalProfit": -1.22,
-    "totalProfitRate": -0.244,
-    "annualizedReturn": -44.53,
+    "totalProfit": -1.17,
+    "totalProfitRate": -1.95,
+    "annualizedReturn": -711.75,
     "currentDate": "2026-01-23",
     "tradedSymbols": {
-      "ETH/USDT": 3,
-      "SOL/USDT": 1
+      "ETH/USDT": 6
     }
   },
-  "lastSaved": 1769145373315
+  "lastSaved": 1769166517298
 }

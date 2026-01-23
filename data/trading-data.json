@@ -1,101 +1,51 @@
 {
   "tradingStatus": {
-    "state": "BUY_ORDER_PLACED",
-    "symbol": "ETH/USDT",
-    "currentTradeId": "trade_1769145373315",
-    "buyOrder": {
-      "orderId": "42050808304",
-      "symbol": "ETH/USDT",
-      "side": "buy",
-      "price": 2939.6,
-      "amount": 0.034,
-      "status": "open",
-      "createdAt": 1769145373315
-    },
-    "high": 2984.71,
-    "low": 2928.33,
-    "lastUpdateTime": 1769145373315
+    "state": "IDLE",
+    "lastUpdateTime": 1769166517297
   },
   "tradeRecords": [
     {
-      "id": "trade_1768978874800",
-      "symbol": "BNB/USDT",
-      "buyOrderId": "10814907699",
-      "buyPrice": 877.5,
-      "amount": 0.113,
-      "startTime": 1768978874800,
-      "status": "completed",
-      "sellOrderId": "10816732774",
-      "sellPrice": 878.8,
-      "profit": 0.15,
-      "profitRate": 0.15,
-      "endTime": 1769004644708
-    },
-    {
-      "id": "trade_1769011217672",
-      "symbol": "SOL/USDT",
-      "buyOrderId": "16120640411",
-      "buyPrice": 126.57,
-      "amount": 0.79,
-      "startTime": 1769011217672,
-      "status": "completed",
-      "sellOrderId": "16123757413",
-      "sellPrice": 130.71,
-      "profit": 3.27,
-      "profitRate": 3.27,
-      "endTime": 1769024297355
-    },
-    {
-      "id": "trade_1769065678622",
+      "id": "trade_1769163693783",
       "symbol": "ETH/USDT",
-      "buyOrderId": "42009362458",
-      "buyPrice": 3003.62,
-      "amount": 0.0332,
-      "startTime": 1769065678622,
+      "buyOrderId": "42059558347",
+      "buyPrice": 2925.51,
+      "amount": 0.0342,
+      "startTime": 1769163693783,
       "status": "completed",
-      "sellOrderId": "42022495984",
-      "sellPrice": 2934.82858,
-      "profit": -2.28,
-      "profitRate": -2.29,
-      "endTime": 1769093308700
+      "sellPrice": 2925,
+      "profit": -0.02,
+      "profitRate": -0.02,
+      "endTime": 1769163743380,
+      "sellOrderId": "42059572734"
     },
     {
-      "id": "trade_1769093952047",
+      "id": "trade_1769164024101",
       "symbol": "ETH/USDT",
-      "buyOrderId": "42023823730",
-      "buyPrice": 2954.34,
-      "amount": 0.0338,
-      "startTime": 1769093952047,
+      "buyOrderId": "42059664897",
+      "buyPrice": 2926.17,
+      "amount": 0.0342,
+      "startTime": 1769164024101,
       "status": "completed",
-      "sellOrderId": "42026478768",
-      "sellPrice": 2943.46359,
-      "profit": 0.07,
-      "profitRate": 0.07,
-      "endTime": 1769097632573
+      "sellOrderId": "42059684899",
+      "sellPrice": 2926.47,
+      "profit": 0.01,
+      "profitRate": 0.01,
+      "endTime": 1769164141021
     },
     {
-      "id": "trade_1769098272491",
+      "id": "trade_1769164880483",
       "symbol": "ETH/USDT",
-      "buyOrderId": "42030273569",
-      "buyPrice": 2930.39,
-      "amount": 0.0341,
-      "startTime": 1769098272491,
+      "buyOrderId": "42060007913",
+      "buyPrice": 2929.77,
+      "amount": 0.0068,
+      "startTime": 1769164880483,
       "status": "completed",
-      "sellOrderId": "42048336766",
-      "sellPrice": 2959.41,
-      "profit": 0.99,
-      "profitRate": 0.99,
-      "endTime": 1769138143677
-    },
-    {
-      "id": "trade_1769145373315",
-      "symbol": "ETH/USDT",
-      "buyOrderId": "42050808304",
-      "buyPrice": 2939.6,
-      "amount": 0.034,
-      "startTime": 1769145373315,
-      "status": "in_progress"
+      "sellOrderId": "42060760082",
+      "sellPrice": 2938.04,
+      "profit": 0.06,
+      "profitRate": 0.28,
+      "endTime": 1769166498346
     }
   ],
-  "lastSaved": 1769145373315
+  "lastSaved": 1769166517299
 }
