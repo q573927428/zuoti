@@ -1,0 +1,35 @@
+{
+    "tradingStatus": {
+      "state": "BOUGHT",
+      "symbol": "ETH/USDT",
+      "currentTradeId": "trade_1769173220015",
+      "buyOrder": {
+        "orderId": "42062947516",
+        "symbol": "ETH/USDT",
+        "side": "buy",
+        "price": 2942.98,
+        "amount": 0.0068,
+        "status": "closed",
+        "createdAt": 1769173220015,
+        "filledAt": 1769174728461
+      },
+      "high": 2984.71,
+      "low": 2914.93,
+      "lastUpdateTime": 1769174770575
+    },
+    "tradeRecords": [
+      {
+        "id": "trade_1769173220015",
+        "symbol": "ETH/USDT",
+        "buyOrderId": "42062947516",
+        "buyPrice": 2942.98,
+        "amount": 0.0068,
+        "startTime": 1769173220015,
+        "status": "completed",
+        "profit": 0,
+        "profitRate": -0.01,
+        "endTime": 1769174770575
+      }
+    ],
+    "lastSaved": 1769174898793
+  }

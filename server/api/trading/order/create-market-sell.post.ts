@@ -1,4 +1,4 @@
-import type { TradingSymbol } from '../../../../types/trading'
+import type { TradingSymbol, TradingStatus } from '../../../../types/trading'
 import { createMarketSellOrder, cancelOrder } from '../../../utils/binance'
 import { getBotInstance } from '../../../modules/trading-bot'
 import { calculateProfit } from '../../../utils/strategy'
@@ -81,21 +81,24 @@ export default defineEventHandler(async (event) => {
           stats.annualizedReturn = dailyReturn * 365
         }
         
-        // 更新交易状态
-        tradingStatus.state = 'DONE'
-        tradingStatus.lastUpdateTime = Date.now()
+        // 记录原始状态用于日志
+        const originalState = tradingStatus.state
         
-        // 如果有卖单信息，更新它
-        if (tradingStatus.sellOrder) {
-          tradingStatus.sellOrder.price = avgPrice
-          tradingStatus.sellOrder.amount = order.amount || amount
-          tradingStatus.sellOrder.status = 'closed'
-          tradingStatus.sellOrder.filledAt = Date.now()
+        // 重置交易状态为DONE，只保留state和lastUpdateTime
+        const newTradingStatus: TradingStatus = {
+          state: 'DONE',
+          lastUpdateTime: Date.now(),
         }
+
+        // 替换旧的tradingStatus对象
+        Object.keys(tradingStatus).forEach(key => {
+          delete (tradingStatus as any)[key]
+        })
+        Object.assign(tradingStatus, newTradingStatus)
         
         // 保存数据
         await botAny.saveData()
-        console.log(`✅ 市价卖出成功，状态已更新: ${tradingStatus.state === 'SELL_ORDER_PLACED' ? 'SELL_ORDER_PLACED' : 'BOUGHT'} -> DONE`)
+        console.log(`✅ 市价卖出成功，状态已更新: ${originalState} -> DONE`)
         console.log(`📊 收益: ${profitResult.profit.toFixed(2)} USDT (${profitResult.profitRate.toFixed(2)}%)`)
       } else {
         console.log(`⚠️  当前状态不匹配或没有交易对信息，状态未更新`)
