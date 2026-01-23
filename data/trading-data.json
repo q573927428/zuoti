@@ -1,35 +1,73 @@
 {
-    "tradingStatus": {
-      "state": "BOUGHT",
-      "symbol": "ETH/USDT",
-      "currentTradeId": "trade_1769173220015",
-      "buyOrder": {
-        "orderId": "42062947516",
-        "symbol": "ETH/USDT",
-        "side": "buy",
-        "price": 2942.98,
-        "amount": 0.0068,
-        "status": "closed",
-        "createdAt": 1769173220015,
-        "filledAt": 1769174728461
-      },
-      "high": 2984.71,
-      "low": 2914.93,
-      "lastUpdateTime": 1769174770575
+  "tradingStatus": {
+    "state": "BUY_ORDER_PLACED",
+    "symbol": "SOL/USDT",
+    "currentTradeId": "trade_1769184256104",
+    "buyOrder": {
+      "orderId": "16138188689",
+      "symbol": "SOL/USDT",
+      "side": "buy",
+      "price": 125.68,
+      "amount": 0.159,
+      "status": "open",
+      "createdAt": 1769184256104
     },
-    "tradeRecords": [
-      {
-        "id": "trade_1769173220015",
-        "symbol": "ETH/USDT",
-        "buyOrderId": "42062947516",
-        "buyPrice": 2942.98,
-        "amount": 0.0068,
-        "startTime": 1769173220015,
-        "status": "completed",
-        "profit": 0,
-        "profitRate": -0.01,
-        "endTime": 1769174770575
-      }
-    ],
-    "lastSaved": 1769174898793
-  }
+    "high": 129.29,
+    "low": 125.28,
+    "lastUpdateTime": 1769184256104
+  },
+  "tradeRecords": [
+    {
+      "id": "trade_1769181460736",
+      "symbol": "SOL/USDT",
+      "buyOrderId": "16137665905",
+      "buyPrice": 125.68,
+      "amount": 0.159,
+      "startTime": 1769181460736,
+      "status": "completed",
+      "sellOrderId": "16137688527",
+      "sellPrice": 125.86,
+      "profit": 0.05,
+      "profitRate": 0.23,
+      "endTime": 1769181575985
+    },
+    {
+      "id": "trade_1769183867215",
+      "symbol": "SOL/USDT",
+      "buyOrderId": "16138115010",
+      "buyPrice": 127.64,
+      "amount": 0.159,
+      "startTime": 1769183867215,
+      "status": "completed",
+      "sellOrderId": "16138136287",
+      "sellPrice": 127.93,
+      "profit": 0.05,
+      "profitRate": 0.23,
+      "endTime": 1769184007765
+    },
+    {
+      "id": "trade_1769184075823",
+      "symbol": "SOL/USDT",
+      "buyOrderId": "16138149742",
+      "buyPrice": 128.21,
+      "amount": 0.159,
+      "startTime": 1769184075823,
+      "status": "completed",
+      "sellOrderId": "16138174085",
+      "sellPrice": 128.09,
+      "profit": -0.02,
+      "profitRate": -0.09,
+      "endTime": 1769184185167
+    },
+    {
+      "id": "trade_1769184256104",
+      "symbol": "SOL/USDT",
+      "buyOrderId": "16138188689",
+      "buyPrice": 125.68,
+      "amount": 0.159,
+      "startTime": 1769184256104,
+      "status": "in_progress"
+    }
+  ],
+  "lastSaved": 1769184256106
+}

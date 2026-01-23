@@ -25,8 +25,8 @@
       "priceVolatilityThreshold": 10
     },
     "dailyReset": {
-      "processingTime": "23:30",
-      "warningTime": "23:00",
+      "processingTime": "23:59",
+      "warningTime": "23:59",
       "forceLiquidationDiscount": 0.999
     },
     "stopLoss": {
@@ -58,9 +58,9 @@
       }
     },
     "dailyTradeLimit": 3,
-    "tradeInterval": 600000,
+    "tradeInterval": 60000,
     "ai": {
-      "enabled": true,
+      "enabled": false,
       "analysisInterval": 86400000,
       "minConfidence": 60,
       "maxRiskLevel": "MEDIUM",
@@ -70,15 +70,16 @@
     }
   },
   "stats": {
-    "totalTrades": 0,
-    "successfulTrades": 0,
-    "failedTrades": 0,
-    "totalProfit": 0,
-    "totalProfitRate": 0,
-    "annualizedReturn": 0,
-    "currentDate": "2026-01-23",
+    "totalTrades": 7,
+    "successfulTrades": 3,
+    "failedTrades": 1,
+    "totalProfit": 0.08,
+    "totalProfitRate": 0.13333333333333333,
+    "annualizedReturn": 48.666666666666664,
+    "currentDate": "2026-01-24",
     "tradedSymbols": {
+      "SOL/USDT": 3
     }
   },
-  "lastSaved": 1769166517298
+  "lastSaved": 1769184256105
 }

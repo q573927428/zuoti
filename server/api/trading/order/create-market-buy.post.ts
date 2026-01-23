@@ -38,9 +38,11 @@ export default defineEventHandler(async (event) => {
       const tradeRecords = botAny.tradeRecords
       const stats = botAny.stats
       
-      if (tradingStatus && tradingStatus.state === 'BUY_ORDER_PLACED' && tradingStatus.symbol === symbol) {
+      if (tradingStatus && tradingStatus.symbol === symbol) {
+        // 允许从多个状态转换到 BOUGHT
+        const allowedStates = ['BUY_ORDER_PLACED', 'IDLE', 'BOUGHT']
         // 更新买单信息
-        if (tradingStatus.buyOrder) {
+        if (allowedStates.includes(tradingStatus.state)) {
           tradingStatus.buyOrder.price = avgPrice
           tradingStatus.buyOrder.amount = order.amount || amount
           tradingStatus.buyOrder.status = 'closed'

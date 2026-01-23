@@ -755,7 +755,7 @@ export class StateHandlers {
       
       console.log(`📊 止损完成，亏损: ${profitResult.profit.toFixed(2)} USDT (${profitResult.profitRate.toFixed(2)}%)`)
       
-      this.updateTradeComplete(tradeRecords, tradingStatus.currentTradeId, profitResult, currentPrice * 0.998, stats)
+      this.updateTradeComplete(tradeRecords, tradingStatus.currentTradeId, profitResult, currentPrice * 0.998, stats, 'STOP_LOSS_MARKET_ORDER')
       
       return { state: 'DONE', lastUpdateTime: Date.now() }
     } catch (error) {
@@ -775,6 +775,15 @@ export class StateHandlers {
     if (!tradingStatus.sellOrder || !tradingStatus.symbol || !tradingStatus.buyOrder) {
       console.error('⚠️  卖单状态异常：缺少必要信息')
       return tradingStatus
+    }
+    
+    // 首先检查交易记录是否已经完成（防止市价卖出后状态被错误重置）
+    if (tradingStatus.currentTradeId) {
+      const tradeRecord = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+      if (tradeRecord && tradeRecord.status === 'completed') {
+        console.log(`✅ 交易记录已标记为完成，直接返回DONE状态: ${tradingStatus.symbol}`)
+        return { state: 'DONE', lastUpdateTime: Date.now() }
+      }
     }
     
     // 查询订单状态
@@ -822,7 +831,14 @@ export class StateHandlers {
     
     const profitResult = calculateProfit(actualAmount, tradingStatus.buyOrder!.price, actualSellPrice)
     
-    this.updateTradeComplete(tradeRecords, tradingStatus.currentTradeId, profitResult, actualSellPrice, stats)
+    this.updateTradeComplete(
+      tradeRecords, 
+      tradingStatus.currentTradeId, 
+      profitResult, 
+      actualSellPrice, 
+      stats,
+      tradingStatus.sellOrder?.orderId
+    )
     
     console.log(`🎉 交易完成! 收益: ${profitResult.profit.toFixed(2)} USDT (${profitResult.profitRate.toFixed(2)}%)`)
     
@@ -896,7 +912,7 @@ export class StateHandlers {
         console.log(`✅ 已成交 ${filledPercent.toFixed(2)}%，视为完成`)
         const actualSellPrice = this.orderManager.getActualPrice(orderStatus, tradingStatus.sellOrder!.price)
         const profitResult = calculateProfit(orderStatus.filled, tradingStatus.buyOrder!.price, actualSellPrice)
-        this.updateTradeComplete(tradeRecords, tradingStatus.currentTradeId, profitResult, actualSellPrice, stats)
+        this.updateTradeComplete(tradeRecords, tradingStatus.currentTradeId, profitResult, actualSellPrice, stats, tradingStatus.sellOrder?.orderId)
         return { state: 'DONE', lastUpdateTime: Date.now() }
       }
       
@@ -925,7 +941,8 @@ export class StateHandlers {
     tradeId: string | undefined,
     profitResult: any,
     sellPrice: number,
-    stats: SystemStats
+    stats: SystemStats,
+    sellOrderId?: string
   ) {
     const record = tradeRecords.find(r => r.id === tradeId)
     if (record) {
@@ -934,6 +951,14 @@ export class StateHandlers {
       record.status = 'completed'
       record.endTime = Date.now()
       record.sellPrice = sellPrice
+      
+      // 如果提供了 sellOrderId，则设置它
+      if (sellOrderId) {
+        record.sellOrderId = sellOrderId
+      } else if (!record.sellOrderId) {
+        // 如果 sellOrderId 不存在，标记为需要检查
+        record.sellOrderId = 'TO_BE_DETERMINED'
+      }
     }
     
     stats.successfulTrades++

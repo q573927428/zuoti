@@ -30,6 +30,11 @@ export default defineEventHandler(async (event) => {
     
     // 获取实际成交价格（市价单可能有多笔成交）
     const avgPrice = order.average || order.price || 0
+    console.log(`📊 计算出的平均价格: ${avgPrice} (average: ${order.average}, price: ${order.price})`)
+    
+    // 调试：检查订单ID字段
+    const orderId = order.id || order.orderId || order.order_id
+    console.log(`🔑 订单ID字段: id=${order.id}, orderId=${order.orderId}, order_id=${order.order_id}, 最终使用: ${orderId}`)
     
     // 更新交易机器人状态 - 市价卖出成功，状态从SELL_ORDER_PLACED或BOUGHT变为DONE
     try {
@@ -51,6 +56,7 @@ export default defineEventHandler(async (event) => {
         if (tradingStatus.currentTradeId) {
           const tradeRecord = tradeRecords.find((r: any) => r.id === tradingStatus.currentTradeId)
           if (tradeRecord) {
+            // 确保sellPrice总是被设置（即使为0也要记录）
             tradeRecord.sellPrice = avgPrice
             tradeRecord.amount = buyAmount
             tradeRecord.profit = profitResult.profit
@@ -58,11 +64,21 @@ export default defineEventHandler(async (event) => {
             tradeRecord.status = 'completed'
             tradeRecord.endTime = Date.now()
             
-            // 如果之前有卖单ID，更新它
-            if (order.id) {
-              tradeRecord.sellOrderId = order.id
+            // 使用调试中确定的订单ID字段
+            const orderId = order.id || order.orderId || order.order_id
+            if (orderId) {
+              tradeRecord.sellOrderId = orderId
+              console.log(`✅ 已设置卖单ID: ${orderId}`)
+            } else {
+              console.warn('⚠️  订单ID为空，sellOrderId未设置')
             }
+            
+            console.log(`📝 交易记录已更新: sellPrice=${avgPrice}, profit=${profitResult.profit}, profitRate=${profitResult.profitRate}%`)
+          } else {
+            console.error(`❌ 未找到交易记录: ${tradingStatus.currentTradeId}`)
           }
+        } else {
+          console.error('❌ tradingStatus.currentTradeId 为空')
         }
         
         // 更新统计信息
@@ -96,6 +112,26 @@ export default defineEventHandler(async (event) => {
         })
         Object.assign(tradingStatus, newTradingStatus)
         
+        // 清除任何可能存在的卖单信息，防止状态处理器误判
+        if (tradingStatus.sellOrder) {
+          delete (tradingStatus as any).sellOrder
+        }
+        if (tradingStatus.currentTradeId) {
+          delete (tradingStatus as any).currentTradeId
+        }
+        if (tradingStatus.symbol) {
+          delete (tradingStatus as any).symbol
+        }
+        if (tradingStatus.buyOrder) {
+          delete (tradingStatus as any).buyOrder
+        }
+        if (tradingStatus.high) {
+          delete (tradingStatus as any).high
+        }
+        if (tradingStatus.low) {
+          delete (tradingStatus as any).low
+        }
+        
         // 保存数据
         await botAny.saveData()
         console.log(`✅ 市价卖出成功，状态已更新: ${originalState} -> DONE`)
@@ -109,7 +145,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       order: {
-        orderId: order.id,
+        orderId: orderId, // 使用确定的订单ID
         symbol,
         side: 'sell',
         price: avgPrice,
