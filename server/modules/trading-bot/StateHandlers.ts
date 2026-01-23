@@ -67,6 +67,7 @@ export class StateHandlers {
   private async checkAIAnalysis(symbol: TradingSymbol, action: 'buy' | 'sell'): Promise<boolean> {
     // 如果AI分析未启用，直接返回true
     if (!this.config.ai.enabled) {
+      console.log('🤖 AI分析未启用，继续执行原有逻辑')
       return true
     }
     
@@ -794,6 +795,12 @@ export class StateHandlers {
     // 检查是否已取消
     if (this.orderManager.isCanceled(orderStatus)) {
       console.log(`⚠️  卖单已被取消: ${tradingStatus.symbol}，回到已买入状态`)
+      // 更新交易记录的sellPrice为-
+      const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+      if (record) {
+        record.sellOrderId = undefined
+        record.sellPrice = undefined
+      }
       return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined }
     }
     
@@ -843,6 +850,12 @@ export class StateHandlers {
     if (tradingStatus.low && currentPrice < tradingStatus.low) {
       console.log(`⚠️  市场反转保护: 当前价格 ${currentPrice} 已跌破原区间下界 ${tradingStatus.low}`)
       await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.sellOrder!.orderId)
+      // 更新交易记录的sellPrice为-
+        const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+        if (record) {
+          record.sellOrderId = undefined
+          record.sellPrice = undefined
+        }
       return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined, lastUpdateTime: Date.now() }
     }
     
@@ -895,6 +908,12 @@ export class StateHandlers {
     
     // 完全未成交，保持交易进行中，下个循环会重新挂卖单
     console.log('⚠️ 卖单完全未成交，回到已买入状态，等待重新挂单')
+    // 更新交易记录的sellPrice为-
+    const record = tradeRecords.find(r => r.id === tradingStatus.currentTradeId)
+    if (record) {
+      record.sellOrderId = undefined
+      record.sellPrice = undefined
+    }
     return { ...tradingStatus, state: 'BOUGHT', sellOrder: undefined, lastUpdateTime: Date.now() }
   }
   

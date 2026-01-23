@@ -9,7 +9,7 @@
       "SOL/USDT"
     ],
     "investmentAmount": 100,
-    "amplitudeThreshold": 2,
+    "amplitudeThreshold": 1,
     "trendThreshold": 10,
     "orderTimeout": {
       "default": 7200000,
@@ -40,7 +40,7 @@
       "partialFillThreshold": 0.9,
       "balanceSafetyBuffer": 0.05,
       "marketOrderDiscount": 0.999,
-      "priceRangeRatio": 0.1
+      "priceRangeRatio": 0.2
     },
     "multiTimeframe": {
       "enabled": true,
@@ -60,24 +60,26 @@
     "dailyTradeLimit": 3,
     "tradeInterval": 600000,
     "ai": {
-      "enabled": true,
+      "enabled": false,
       "analysisInterval": 86400000,
       "minConfidence": 60,
       "maxRiskLevel": "MEDIUM",
       "useForBuyDecisions": true,
       "useForSellDecisions": true,
-      "cacheDuration": 1800000
+      "cacheDuration": 600000
     }
   },
   "stats": {
-    "totalTrades": 1,
-    "successfulTrades": 0,
+    "totalTrades": 3,
+    "successfulTrades": 2,
     "failedTrades": 0,
-    "totalProfit": 0,
-    "totalProfitRate": 0,
-    "annualizedReturn": 0,
-    "currentDate": "2026-01-22",
-    "tradedSymbols": {}
+    "totalProfit": -2.21,
+    "totalProfitRate": -0.7599999999999999,
+    "annualizedReturn": -138.7,
+    "currentDate": "2026-01-23",
+    "tradedSymbols": {
+      "ETH/USDT": 1
+    }
   },
-  "lastSaved": 1769084420925
+  "lastSaved": 1769137222621
 }

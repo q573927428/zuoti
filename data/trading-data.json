@@ -1,30 +1,21 @@
 {
   "tradingStatus": {
-    "state": "SELL_ORDER_PLACED",
+    "state": "BOUGHT",
     "symbol": "ETH/USDT",
-    "currentTradeId": "trade_1769065678622",
+    "currentTradeId": "trade_1769098272491",
     "buyOrder": {
-      "orderId": "42009362458",
+      "orderId": "42030273569",
       "symbol": "ETH/USDT",
       "side": "buy",
-      "price": 3003.62,
-      "amount": 0.0332,
+      "price": 2930.39,
+      "amount": 0.0341,
       "status": "closed",
-      "createdAt": 1769065678622,
-      "filledAt": 1769068497665
+      "createdAt": 1769098272491,
+      "filledAt": 1769098678074
     },
-    "high": 3038.33,
-    "low": 2977.22,
-    "lastUpdateTime": 1769082323919,
-    "sellOrder": {
-      "orderId": "42015250463",
-      "symbol": "ETH/USDT",
-      "side": "sell",
-      "price": 3026.108,
-      "amount": 0.0332,
-      "status": "open",
-      "createdAt": 1769082352358
-    }
+    "high": 3027.9,
+    "low": 2906.02,
+    "lastUpdateTime": 1769134963857
   },
   "tradeRecords": [
     {
@@ -62,10 +53,38 @@
       "buyPrice": 3003.62,
       "amount": 0.0332,
       "startTime": 1769065678622,
+      "status": "completed",
+      "sellOrderId": "42022495984",
+      "sellPrice": 2934.82858,
+      "profit": -2.28,
+      "profitRate": -2.29,
+      "endTime": 1769093308700
+    },
+    {
+      "id": "trade_1769093952047",
+      "symbol": "ETH/USDT",
+      "buyOrderId": "42023823730",
+      "buyPrice": 2954.34,
+      "amount": 0.0338,
+      "startTime": 1769093952047,
+      "status": "completed",
+      "sellOrderId": "42026478768",
+      "sellPrice": 2943.46359,
+      "profit": 0.07,
+      "profitRate": 0.07,
+      "endTime": 1769097632573
+    },
+    {
+      "id": "trade_1769098272491",
+      "symbol": "ETH/USDT",
+      "buyOrderId": "42030273569",
+      "buyPrice": 2930.39,
+      "amount": 0.0341,
+      "startTime": 1769098272491,
       "status": "in_progress",
-      "sellOrderId": "42015250463",
-      "sellPrice": 3026.108
+      "sellOrderId": "42045288253",
+      "sellPrice": 2989.348
     }
   ],
-  "lastSaved": 1769084420925
+  "lastSaved": 1769134963857
 }

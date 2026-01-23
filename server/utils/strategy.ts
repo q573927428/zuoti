@@ -299,10 +299,10 @@ export async function findBestTradingSymbolMultiTimeframe(
         if (current.score < max.score) return max
         
         // 评分相同的情况下，比较1h振幅
-        const currentAmplitude = current.timeframes['1h'].amplitude
-        const maxAmplitude = max.timeframes['1h'].amplitude
+        const currentAmplitude = current.timeframes['15m'].amplitude
+        const maxAmplitude = max.timeframes['15m'].amplitude
         
-        // 选择1h振幅更大的交易对
+        // 选择15m振幅更大的交易对
         return currentAmplitude > maxAmplitude ? current : max
       })
     }
