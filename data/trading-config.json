@@ -3,10 +3,11 @@
     "isTestnet": false,
     "isAutoTrading": true,
     "symbols": [
-      "ETH/USDT",
       "BTC/USDT",
+      "ETH/USDT",
       "BNB/USDT",
-      "SOL/USDT"
+      "SOL/USDT",
+      "XRP/USDT"
     ],
     "investmentAmount": 20,
     "amplitudeThreshold": 1,
@@ -78,9 +79,9 @@
     "annualizedReturn": 48.666666666666664,
     "currentDate": "2026-01-24",
     "tradedSymbols": {
-      "SOL/USDT": 5,
-      "ETH/USDT": 13
+      "SOL/USDT": 6,
+      "ETH/USDT": 14
     }
   },
-  "lastSaved": 1769232730631
+  "lastSaved": 1769263254376
 }
