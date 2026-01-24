@@ -39,6 +39,11 @@ const navItems = ref([
     path: '/backend-logs',
     label: '后端日志',
     icon: '📋'
+  },
+  {
+    path: '/system-config',
+    label: '系统配置',
+    icon: '⚙️'
   }
 ])
 

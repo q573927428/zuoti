@@ -80,6 +80,17 @@ export const useTradingStore = defineStore('trading', {
       // 交易次数和间隔配置
       dailyTradeLimit: 3,                    // 每日交易次数限制
       tradeInterval: 60 * 60 * 1000,         // 交易间隔时间（1小时）
+
+      // AI分析配置
+      ai: {
+        enabled: true,
+        analysisInterval: 10 * 60 * 1000,    // 10分钟
+        minConfidence: 70,                   // 最小置信度70%
+        maxRiskLevel: 'MEDIUM' as const,     // 最大风险等级：中风险
+        useForBuyDecisions: true,            // 用于买入决策
+        useForSellDecisions: true,           // 用于卖出决策
+        cacheDuration: 5 * 60 * 1000,        // 缓存5分钟
+      },
     } as SystemConfig,
 
     // 交易状态
