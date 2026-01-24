@@ -133,7 +133,7 @@
           <template #header>
             <div class="card-header">
               <span>日志列表 ({{ store.backendLogs.length }} 条)</span>
-              <div class="card-actions">
+              <div>
                 <el-button type="primary" size="small" @click="refreshBackendLogs" :loading="loadingBackendLogs">
                   刷新
                 </el-button>
@@ -678,14 +678,6 @@ const handleCurrentChange = (page: number) => {
   gap: 10px;
   margin-bottom: 8px;
   flex-wrap: wrap;
-}
-
-.card-actions{
-  /* //显示在右侧 */
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-
 }
 
 .log-timestamp {
