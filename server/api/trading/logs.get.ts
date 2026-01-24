@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
     // 解析查询参数
     const level = query.level as string || 'all'
     const limit = query.limit ? parseInt(query.limit as string) : 100
+    const offset = query.offset ? parseInt(query.offset as string) : 0
     const since = query.since ? parseInt(query.since as string) : 0
     const search = query.search as string || ''
     
@@ -20,10 +21,15 @@ export default defineEventHandler(async (event) => {
       throw new Error('limit参数必须在1-1000之间')
     }
     
+    if (offset < 0) {
+      throw new Error('offset参数不能为负数')
+    }
+    
     // 获取日志
     const logs = logger.getLogs({
       level: level as any,
       limit,
+      offset,
       since,
       search,
     })
@@ -39,6 +45,7 @@ export default defineEventHandler(async (event) => {
         query: {
           level,
           limit,
+          offset,
           since,
           search,
         },

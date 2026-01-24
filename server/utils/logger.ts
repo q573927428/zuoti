@@ -322,12 +322,13 @@ class Logger {
   getLogs(options?: {
     level?: LogEntry['level'] | 'all';
     limit?: number;
+    offset?: number;
     since?: number;
     search?: string;
   }): LogEntry[] {
     let filteredLogs = [...this.logs];
     
-    const { level = 'all', limit = 100, since = 0, search = '' } = options || {};
+    const { level = 'all', limit = 100, offset = 0, since = 0, search = '' } = options || {};
     
     // 按时间过滤
     if (since > 0) {
@@ -348,8 +349,8 @@ class Logger {
       );
     }
     
-    // 限制数量
-    return filteredLogs.slice(0, limit);
+    // 应用分页：先应用offset，再限制数量
+    return filteredLogs.slice(offset, offset + limit);
   }
   
   /**

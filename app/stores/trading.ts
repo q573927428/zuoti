@@ -524,6 +524,7 @@ export const useTradingStore = defineStore('trading', {
     async fetchBackendLogs(options?: {
       level?: 'all' | 'info' | 'warn' | 'error' | 'debug';
       limit?: number;
+      offset?: number;
       since?: number;
       search?: string;
     }) {
@@ -531,6 +532,7 @@ export const useTradingStore = defineStore('trading', {
         const params = new URLSearchParams()
         if (options?.level) params.append('level', options.level)
         if (options?.limit) params.append('limit', options.limit.toString())
+        if (options?.offset) params.append('offset', options.offset.toString())
         if (options?.since) params.append('since', options.since.toString())
         if (options?.search) params.append('search', options.search)
         
