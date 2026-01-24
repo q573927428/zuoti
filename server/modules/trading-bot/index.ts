@@ -229,10 +229,10 @@ export class TradingBot {
     // 立即执行一次
     this.tradingLoop()
     
-    // 每30秒执行一次
+    // 每60秒执行一次
     setInterval(() => {
       this.tradingLoop()
-    }, 30000)
+    }, 60000)
   }
   
   // ===== 公共API方法 =====

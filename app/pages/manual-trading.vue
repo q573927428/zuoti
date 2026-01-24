@@ -180,10 +180,10 @@ onMounted(async () => {
   await refreshAllPrices()
   await loadRecentTrades()
   
-  // 每30秒刷新一次价格
+  // 每60秒刷新一次价格
   priceTimer = window.setInterval(async () => {
     await refreshAllPrices()
-  }, 30000)
+  }, 60000)
 })
 
 // 页面卸载时清理
