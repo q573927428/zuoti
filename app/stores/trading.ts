@@ -15,11 +15,11 @@ export const useTradingStore = defineStore('trading', {
     // 系统配置
     config: {
       isTestnet: false,         // 是否使用币安测试网
-      isAutoTrading: false,     // 是否开启自动交易主开关
-      symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT'] as TradingSymbol[],
-      investmentAmount: 20,    // 单次交易的投入金额（USDT
-      amplitudeThreshold: 3,   // 价格振幅阈值（%）
-      trendThreshold: 5.0,       // 趋势强度阈值（%）
+      isAutoTrading: true,     // 是否开启自动交易主开关
+      symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT'] as TradingSymbol[],
+      investmentAmount: 100,    // 单次交易的投入金额（USDT
+      amplitudeThreshold: 2.0,   // 价格振幅阈值（%）
+      trendThreshold: 10.0,       // 趋势强度阈值（%）
 
       // 订单超时配置
       orderTimeout: {
@@ -38,8 +38,8 @@ export const useTradingStore = defineStore('trading', {
 
       // 日切配置
       dailyReset: {
-        processingTime: '23:00',            // 23:00开始日切处理
-        warningTime: '23:30',               // 22:30开始预警
+        processingTime: '23:30',            // 23:00开始日切处理
+        warningTime: '23:20',               // 22:30开始预警
         forceLiquidationDiscount: 0.999,    // 强平价格折扣
       },
 
@@ -53,7 +53,7 @@ export const useTradingStore = defineStore('trading', {
 
       // 交易参数配置
       trading: {
-        priceDeviationThreshold: 0.5,
+        priceDeviationThreshold: 2,
         partialFillThreshold: 0.9,
         balanceSafetyBuffer: 0.05,
         marketOrderDiscount: 0.999,
@@ -69,7 +69,7 @@ export const useTradingStore = defineStore('trading', {
           '1h': 0.35,
           '4h': 0.25
         },
-        scoreThreshold: 70,
+        scoreThreshold: 60,
         lookbackPeriods: {
           '15m': 48,
           '1h': 24,
@@ -84,12 +84,12 @@ export const useTradingStore = defineStore('trading', {
       // AI分析配置
       ai: {
         enabled: true,
-        analysisInterval: 10 * 60 * 1000,    // 10分钟
-        minConfidence: 70,                   // 最小置信度70%
+        analysisInterval: 24 * 60 * 60 * 1000,    // 10分钟
+        minConfidence: 60,                   // 最小置信度70%
         maxRiskLevel: 'MEDIUM' as const,     // 最大风险等级：中风险
         useForBuyDecisions: true,            // 用于买入决策
         useForSellDecisions: true,           // 用于卖出决策
-        cacheDuration: 5 * 60 * 1000,        // 缓存5分钟
+        cacheDuration: 10 * 60 * 1000,        // 缓存30分钟
       },
     } as SystemConfig,
 
