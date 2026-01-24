@@ -133,7 +133,7 @@
           <template #header>
             <div class="card-header">
               <span>日志列表 ({{ store.backendLogs.length }} 条)</span>
-              <div>
+              <div class="card-actions">
                 <el-button type="primary" size="small" @click="refreshBackendLogs" :loading="loadingBackendLogs">
                   刷新
                 </el-button>
@@ -173,7 +173,7 @@
               v-model:page-size="pageSize"
               :page-sizes="[50, 100, 200, 500]"
               :total="store.backendLogStats.total"
-              layout="total, sizes, prev, pager, next, jumper"
+              layout="total, prev, pager, next"
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
             />
@@ -467,8 +467,28 @@ const handleCurrentChange = (page: number) => {
 
 <style scoped>
 .backend-logs-container {
-  min-height: 100vh;
+  min-height: calc(100vh - 70px); /* 减去底部导航高度 */
   background: #f5f7fa;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .backend-logs-container {
+    min-height: calc(100vh - 60px);
+  }
+}
+
+@media (max-width: 480px) {
+  .backend-logs-container {
+    min-height: calc(100vh - 55px);
+  }
+}
+
+/* 桌面端适配 */
+@media (min-width: 769px) {
+  .backend-logs-container {
+    min-height: calc(100vh - 80px);
+  }
 }
 
 .header {
@@ -660,6 +680,14 @@ const handleCurrentChange = (page: number) => {
   flex-wrap: wrap;
 }
 
+.card-actions{
+  /* //显示在右侧 */
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+
+}
+
 .log-timestamp {
   color: #909399;
   font-size: 11px;
@@ -785,7 +813,6 @@ const handleCurrentChange = (page: number) => {
   }
   
   .log-filters :deep(.el-form-item__label) {
-    width: 100%;
     text-align: left;
   }
   

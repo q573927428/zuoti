@@ -4,7 +4,7 @@
       <!-- 头部 -->
       <el-header class="header">
         <div class="header-content">
-          <h1>币安自动做T交易系统
+          <h1>自动做T系统
             <span class="header-actions">
               <el-tag :type="store.config.isTestnet ? 'warning' : 'danger'" size="large">
                 {{ store.config.isTestnet ? '模拟交易' : '真实交易' }}
@@ -534,48 +534,6 @@
           </el-table>
         </el-card>
 
-        <!-- 手动交易面板 -->
-        <el-card shadow="hover" class="manual-trading-card">
-          <template #header>
-            <div class="card-header">
-              <span>手动交易</span>
-            </div>
-          </template>
-          <el-form :model="manualForm" label-width="80px">
-            <el-form-item label="交易对">
-              <el-select v-model="manualForm.symbol" placeholder="选择交易对" style="width: 160px;">
-                <el-option
-                  v-for="symbol in store.config.symbols"
-                  :key="symbol"
-                  :label="symbol"
-                  :value="symbol"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="价格">
-              <el-input-number v-model="manualForm.price" :min="0" :precision="5"/>
-              <el-button type="primary" size="small" @click="getSymbolPrices">
-                获取当前价格
-              </el-button>
-            </el-form-item>
-            <el-form-item label="数量">
-              <el-input-number v-model="manualForm.amount" :min="0" :precision="5"/>
-              <el-tag  type="info" size="small">
-                USDT余额：{{  (store.balances['USDT']?.free || 0).toFixed(2) }}
-              </el-tag>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="success" @click="handleManualBuy" :loading="manualLoading">
-                手动买入
-              </el-button>
-              <el-button type="danger" @click="handleManualSell" :loading="manualLoading">
-                手动卖出
-              </el-button>
-            </el-form-item>
-              
-          </el-form>
-        </el-card>
-
         <!-- 调试日志 -->
         <el-card shadow="hover" class="debug-log-card">
           <template #header>
@@ -694,7 +652,6 @@ const store = useTradingStore()
 const loading = ref(false)
 const testing = ref(false)
 const loadingBalance = ref(false)
-const manualLoading = ref(false)
 const resettingCircuitBreaker = ref(false)
 
 // 市价买卖相关
@@ -705,13 +662,6 @@ const marketSelling = ref(false)
 const selectedAISymbol = ref(store.config.symbols[0])
 const testingAI = ref(false)
 const aiAnalysisResult = ref<any>(null)
-
-// 手动交易表单
-const manualForm = ref({
-  symbol: 'BTC/USDT' as any,
-  price: 0,
-  amount: 0,
-})
 
 // 交易间隔分钟数（用于显示和输入）
 const tradeIntervalMinutes = computed({
@@ -815,58 +765,6 @@ const testConnection = async () => {
     ElMessage.error('测试连接失败: ' + error.message)
   } finally {
     testing.value = false
-  }
-}
-
-// 刷新当前价格
-const getSymbolPrices = async () => {
-  try {
-    const symbol = manualForm.value.symbol
-    const response = await $fetch('/api/trading/current-price', {
-      params: { symbol }
-    }) as any
-    
-    if (response.success) {
-      store.updateCurrentPrice(symbol, response.price)
-      manualForm.value.price = response.price
-    }
-  } catch (error) {
-    console.error('刷新当前价格失败:', error)
-  }
-}
-// 手动买入
-const handleManualBuy = async () => {
-  if (!manualForm.value.price || !manualForm.value.amount) {
-    ElMessage.warning('请输入价格和数量')
-    return
-  }
-  
-  manualLoading.value = true
-  try {
-    await store.manualBuy(manualForm.value.symbol, manualForm.value.price, manualForm.value.amount)
-    ElMessage.success('买单提交成功')
-  } catch (error: any) {
-    ElMessage.error('买单提交失败: ' + error.message)
-  } finally {
-    manualLoading.value = false
-  }
-}
-
-// 手动卖出
-const handleManualSell = async () => {
-  if (!manualForm.value.price || !manualForm.value.amount) {
-    ElMessage.warning('请输入价格和数量')
-    return
-  }
-  
-  manualLoading.value = true
-  try {
-    await store.manualSell(manualForm.value.symbol, manualForm.value.price, manualForm.value.amount)
-    ElMessage.success('卖单提交成功')
-  } catch (error: any) {
-    ElMessage.error('卖单提交失败: ' + error.message)
-  } finally {
-    manualLoading.value = false
   }
 }
 
@@ -1213,8 +1111,28 @@ const handleMarketSellFromStatus = async () => {
 
 <style scoped>
 .trading-container {
-  min-height: 100vh;
+  min-height: calc(100vh - 70px); /* 减去底部导航高度 */
   background: #f5f7fa;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .trading-container {
+    min-height: calc(100vh - 60px);
+  }
+}
+
+@media (max-width: 480px) {
+  .trading-container {
+    min-height: calc(100vh - 55px);
+  }
+}
+
+/* 桌面端适配 */
+@media (min-width: 769px) {
+  .trading-container {
+    min-height: calc(100vh - 80px);
+  }
 }
 
 .header {
@@ -1474,10 +1392,6 @@ const handleMarketSellFromStatus = async () => {
   font-size: 18px;
   color: #303133;
   font-weight: bold;
-}
-
-.manual-trading-card {
-  margin-bottom: 20px;
 }
 
 .debug-log-card {
