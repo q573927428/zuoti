@@ -174,6 +174,7 @@
               :page-sizes="[50, 100, 200, 500]"
               :total="store.backendLogStats.total"
               layout="total, prev, pager, next"
+              :pager-count="3"
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
             />
