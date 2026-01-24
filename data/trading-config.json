@@ -26,8 +26,8 @@
       "priceVolatilityThreshold": 10
     },
     "dailyReset": {
-      "processingTime": "23:59",
-      "warningTime": "23:59",
+      "processingTime": "23:30",
+      "warningTime": "23:20",
       "forceLiquidationDiscount": 0.999
     },
     "stopLoss": {

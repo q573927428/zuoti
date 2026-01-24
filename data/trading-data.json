@@ -1,6 +1,6 @@
 {
   "tradingStatus": {
-    "state": "BOUGHT",
+    "state": "SELL_ORDER_PLACED",
     "symbol": "SOL/USDT",
     "currentTradeId": "trade_1769237387542",
     "buyOrder": {
@@ -15,7 +15,16 @@
     },
     "high": 129.13,
     "low": 126.54,
-    "lastUpdateTime": 1769247701303
+    "lastUpdateTime": 1769247701303,
+    "sellOrder": {
+      "orderId": "16143252466",
+      "symbol": "SOL/USDT",
+      "side": "sell",
+      "price": 127.866,
+      "amount": 0.157,
+      "status": "open",
+      "createdAt": 1769263254376
+    }
   },
   "tradeRecords": [
     {
@@ -67,8 +76,10 @@
       "buyPrice": 127.05,
       "amount": 0.157,
       "startTime": 1769237387542,
-      "status": "in_progress"
+      "status": "in_progress",
+      "sellOrderId": "16143252466",
+      "sellPrice": 127.866
     }
   ],
-  "lastSaved": 1769247701303
+  "lastSaved": 1769263254377
 }
