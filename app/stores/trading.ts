@@ -17,7 +17,7 @@ export const useTradingStore = defineStore('trading', {
     config: {
       isTestnet: false,         // 是否使用币安测试网
       isAutoTrading: true,     // 是否开启自动交易主开关
-      symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT'] as TradingSymbol[],
+      symbols: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT'] as TradingSymbol[],
       investmentAmount: 100,    // 单次交易的投入金额（USDT
       amplitudeThreshold: 2.0,   // 价格振幅阈值（%）
       trendThreshold: 10.0,       // 趋势强度阈值（%）
@@ -25,6 +25,8 @@ export const useTradingStore = defineStore('trading', {
       // 订单超时配置
       orderTimeout: {
         default: 120 * 60 * 1000, // 2小时
+        buy: 60 * 60 * 1000,
+        sell: 120 * 60 * 1000,
       },
 
       // 熔断机制配置

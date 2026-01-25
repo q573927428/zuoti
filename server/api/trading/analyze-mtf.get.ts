@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     
     // 解析参数
-    const symbolsStr = query.symbols as string || 'ETH/USDT,BTC/USDT,BNB/USDT,SOL/USDT'
+    const symbolsStr = query.symbols as string || 'BTC/USDT,ETH/USDT,BNB/USDT,SOL/USDT,XRP/USDT'
     const symbols = symbolsStr.split(',') as TradingSymbol[]
     const amplitudeThreshold = parseFloat(query.amplitudeThreshold as string) || 3
     const trendThreshold = parseFloat(query.trendThreshold as string) || 5

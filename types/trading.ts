@@ -1,5 +1,5 @@
 // 交易系统类型定义
-export type TradingSymbol = 'ETH/USDT' | 'BTC/USDT' | 'BNB/USDT' | 'SOL/USDT' | 'XRP/USDT'
+export type TradingSymbol = 'BTC/USDT' | 'ETH/USDT' | 'BNB/USDT' | 'SOL/USDT' | 'XRP/USDT'
 
 export type TradingState = 'IDLE' | 'BUY_ORDER_PLACED' | 'BOUGHT' | 'SELL_ORDER_PLACED' | 'DONE'
 

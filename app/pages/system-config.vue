@@ -48,8 +48,8 @@
                 style="width: 100%"
                 @change="handleConfigChange"
               >
-                <el-option label="ETH/USDT" value="ETH/USDT" />
                 <el-option label="BTC/USDT" value="BTC/USDT" />
+                <el-option label="ETH/USDT" value="ETH/USDT" />
                 <el-option label="BNB/USDT" value="BNB/USDT" />
                 <el-option label="SOL/USDT" value="SOL/USDT" />
               </el-select>
@@ -644,7 +644,7 @@ const resetToDefaults = async () => {
     store.config = {
       isTestnet: false,
       isAutoTrading: false,
-      symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT'],
+      symbols: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT'],
       investmentAmount: 20,
       amplitudeThreshold: 3,
       trendThreshold: 5.0,

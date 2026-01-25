@@ -18,7 +18,7 @@ export class DataManager {
     return {
       isTestnet: false,        // 是否使用币安测试网
       isAutoTrading: true,    // 是否开启自动交易主开关
-      symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT'] as TradingSymbol[],
+      symbols: ['BTC/USDT','ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT'] as TradingSymbol[],
       investmentAmount: 100,   // 单次交易的投入金额（USDT
       amplitudeThreshold: 2.0,  // 价格振幅阈值（%）
       trendThreshold: 10.0,      // 趋势强度阈值（%）
