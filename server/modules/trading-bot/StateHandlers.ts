@@ -661,7 +661,7 @@ export class StateHandlers {
     )
     
     if (!result.bestSymbol) {
-      console.log(`⏳ 当前交易对：${tradingStatus.symbol} 不满足交易限制，等待下次循环`)
+      console.log(`⏳ ${tradingStatus.symbol} 不符合卖出条件（振幅/趋势/价格区间不达标），等待下次分析`)
       return tradingStatus
     }
     
