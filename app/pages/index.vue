@@ -593,11 +593,6 @@ const tradeIntervalMinutes = computed({
   }
 })
 
-// 处理交易间隔变化
-const handleTradeIntervalChange = async () => {
-  await handleConfigChange()
-}
-
 // 定时器 & 停止标志
 let timer: number | null = null, stopped = false
 
@@ -720,10 +715,26 @@ const refreshAnalysis = async () => {
     
     // 同时获取当前价格
     await refreshCurrentPrices()
+    
+    // 获取AI分析结果（如果启用）
+    if (store.config.ai.enabled) {
+      await refreshAIAnalysis()
+    }
   } catch (error) {
     console.error('刷新振幅分析失败:', error)
   } finally {
     loading.value = false
+  }
+}
+
+// 刷新AI分析结果
+const refreshAIAnalysis = async () => {
+  try {
+    for (const symbol of store.config.symbols) {
+      await store.fetchAIAnalysis(symbol as TradingSymbol)
+    }
+  } catch (error) {
+    console.error('刷新AI分析失败:', error)
   }
 }
 
@@ -744,18 +755,6 @@ const refreshCurrentPrices = async () => {
   }
 }
 
-// 处理自动交易开关变化
-const handleAutoTradingChange = async () => {
-  try {
-    await store.toggleAutoTrading(store.config.isAutoTrading)
-    ElMessage.success(`自动交易已${store.config.isAutoTrading ? '开启' : '关闭'}`)
-  } catch (error: any) {
-    ElMessage.error('切换自动交易失败: ' + error.message)
-    // 切换失败，恢复状态
-    store.config.isAutoTrading = !store.config.isAutoTrading
-  }
-}
-
 // 处理重置熔断器
 const handleResetCircuitBreaker = async () => {
   resettingCircuitBreaker.value = true
@@ -769,12 +768,6 @@ const handleResetCircuitBreaker = async () => {
   } finally {
     resettingCircuitBreaker.value = false
   }
-}
-
-// 处理配置变化
-const handleConfigChange = async () => {
-  await store.savePersistedData()
-  await refreshAnalysis()
 }
 
 // 获取状态类型
@@ -884,6 +877,36 @@ const is15mAmplitudePassed = (row: any): boolean => {
 const getConfirmationStatus = (row: any): { text: string; type: 'success' | 'warning' | 'danger' | 'info' | 'primary'; tooltip?: string } => {
   const isValid = row.isValid === true
   const is15mPassed = is15mAmplitudePassed(row)
+  
+  // 获取当前交易对的AI分析结果
+  const symbol = row.symbol as TradingSymbol
+  const aiAnalysis = store.aiAnalysisCache[symbol]
+  const isAIPassed = aiAnalysis ? store.checkAIPassed(aiAnalysis, 'buy') : true
+  
+  // 如果多时间框架通过但AI分析不通过
+  if (isValid && !isAIPassed) {
+    // 构建详细的AI分析信息
+    let aiDetails = '多时间框架通过但AI分析未通过'
+    if (aiAnalysis) {
+      const recommendationText = getRecommendationText(aiAnalysis.recommendation)
+      const riskLevelText = aiAnalysis.riskLevel
+      const sentimentText = aiAnalysis.marketSentiment
+      // 使用换行符分隔，使tooltip更易读
+      aiDetails = `多时间框架通过但AI分析未通过\n\n` +
+                  `AI分析结果:\n` +
+                  `• 交易对: ${symbol}\n` +
+                  `• 推荐: ${recommendationText}\n` +
+                  `• 置信度: ${aiAnalysis.confidence}%\n` +
+                  `• 风险等级: ${riskLevelText}\n` +
+                  `• 市场情绪: ${sentimentText}`
+    }
+    
+    return {
+      text: '⚠️ AI未过',
+      type: 'warning',
+      tooltip: aiDetails
+    }
+  }
   
   // 如果评分通过但15m未达标，显示"未过"并给出提示
   if (isValid && !is15mPassed) {

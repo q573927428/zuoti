@@ -6,7 +6,8 @@ import type {
   SystemConfig, 
   SystemStats,
   AmplitudeAnalysis,
-  MultiTimeframeAnalysis
+  MultiTimeframeAnalysis,
+  AIAnalysisResult
 } from '../../types/trading'
 import { getCurrentDate, getDateFromTimestamp } from '../utils/date'
 
@@ -162,6 +163,9 @@ export const useTradingStore = defineStore('trading', {
       consecutiveFailures: number
       dailyLoss: number
     },
+
+    // AI分析结果缓存（按交易对存储）
+    aiAnalysisCache: {} as Record<TradingSymbol, AIAnalysisResult>,
   }),
 
   getters: {
@@ -591,6 +595,79 @@ export const useTradingStore = defineStore('trading', {
         console.error('清空后端日志失败:', error)
         return { success: false, message: error.message }
       }
+    },
+
+    // 获取AI分析结果
+    async fetchAIAnalysis(symbol: TradingSymbol): Promise<AIAnalysisResult | null> {
+      try {
+        // 检查缓存是否有效
+        const cached = this.aiAnalysisCache[symbol]
+        if (cached && cached.expiresAt > Date.now()) {
+          console.log(`📊 使用缓存的AI分析结果: ${symbol}`)
+          return cached
+        }
+
+        const response = await $fetch('/api/trading/ai-analyze', {
+          method: 'POST',
+          body: { symbol }
+        }) as any
+        
+        if (response.success) {
+          this.aiAnalysisCache[symbol] = response.analysis
+          this.addDebugLog(`获取AI分析成功: ${symbol} - ${response.analysis.recommendation} (${response.analysis.confidence}%)`)
+          return response.analysis
+        } else {
+          this.addDebugLog(`获取AI分析失败: ${response.error || '未知错误'}`)
+          return null
+        }
+      } catch (error: any) {
+        this.addDebugLog(`获取AI分析错误: ${error.message}`)
+        console.error('获取AI分析失败:', error)
+        return null
+      }
+    },
+
+    // 检查AI分析是否通过（根据配置）
+    checkAIPassed(analysis: AIAnalysisResult | null, action: 'buy' | 'sell'): boolean {
+      if (!analysis) {
+        // 如果没有分析结果，根据配置决定是否通过
+        return !this.config.ai.enabled || 
+               (action === 'buy' && !this.config.ai.useForBuyDecisions) ||
+               (action === 'sell' && !this.config.ai.useForSellDecisions)
+      }
+
+      // 检查置信度阈值
+      if (analysis.confidence < this.config.ai.minConfidence) {
+        return false
+      }
+
+      // 检查风险等级
+      const riskLevels = { LOW: 1, MEDIUM: 2, HIGH: 3 }
+      const maxRiskLevel = riskLevels[this.config.ai.maxRiskLevel]
+      const currentRiskLevel = riskLevels[analysis.riskLevel]
+      
+      if (currentRiskLevel > maxRiskLevel) {
+        return false
+      }
+
+      // 检查交易建议
+      if (action === 'buy') {
+        // 买入操作需要BUY或HOLD建议
+        return analysis.recommendation === 'BUY' || analysis.recommendation === 'HOLD'
+      } else if (action === 'sell') {
+        // 卖出操作需要SELL或HOLD建议
+        return analysis.recommendation === 'SELL' || analysis.recommendation === 'HOLD'
+      }
+
+      return false
+    },
+
+    // 获取当前交易对的AI分析结果
+    getCurrentAIAnalysis(): AIAnalysisResult | null {
+      if (!this.tradingStatus.symbol) {
+        return null
+      }
+      return this.aiAnalysisCache[this.tradingStatus.symbol] || null
     },
   },
 })
