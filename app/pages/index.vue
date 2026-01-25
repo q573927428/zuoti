@@ -670,21 +670,6 @@ const refreshOnce = async () => {
   setTimeout(() => {
     refreshAnalysis() 
   }, 500)
-  
-  // 页面默认加载AI分析信息
-  if (store.config.ai.enabled && store.config.symbols.length > 0) {
-    setTimeout(async () => {
-      try {
-        // 获取第一个交易对的AI分析结果
-        const result = await store.fetchAIAnalysis(store.config.symbols[0] as TradingSymbol)
-        if (result && result.analysis) {
-          aiAnalysisResult.value = result
-        }
-      } catch (error) {
-        console.error('页面默认加载AI分析失败:', error)
-      }
-    }, 1000) // 延迟1秒，等待其他数据加载完成
-  }
 }
 
 // 定时刷新循环
@@ -696,7 +681,7 @@ async function loop() {
     console.error('定时刷新失败:', e)
   }
   if (!stopped) {
-    timer = window.setTimeout(loop, 30000)
+    timer = window.setTimeout(loop, 60000)
   }
 }
 
@@ -817,7 +802,12 @@ const refreshAIAnalysis = async () => {
     const promises = store.config.symbols.map(symbol => 
       store.fetchAIAnalysis(symbol as TradingSymbol)
     )
-    await Promise.all(promises)
+    const results = await Promise.all(promises)
+    
+    // 将第一个交易对的结果设置到 aiAnalysisResult
+    if (results.length > 0 && results[0] && results[0].analysis) {
+      aiAnalysisResult.value = results[0]
+    }
   } catch (error) {
     console.error('刷新AI分析失败:', error)
   }
