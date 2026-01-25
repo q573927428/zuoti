@@ -412,43 +412,50 @@
           </template>
           
           <!-- AI分析结果展示 -->
-          <div v-if="aiAnalysisResult" class="ai-analysis-result">
+          <div v-if="aiAnalysisResult && aiAnalysisResult.analysis" class="ai-analysis-result">
             <el-descriptions :column="2" border>
-              <el-descriptions-item label="交易对">{{ aiAnalysisResult.symbol }}</el-descriptions-item>
+              <el-descriptions-item label="交易对">{{ aiAnalysisResult.analysis.symbol }}</el-descriptions-item>
               <el-descriptions-item label="分析时间">
-                {{ new Date(aiAnalysisResult.timestamp).toLocaleString() }}
+                {{ new Date(aiAnalysisResult.analysis.timestamp).toLocaleString() }}
+              </el-descriptions-item>
+              <el-descriptions-item label="缓存状态">
+                <el-tag :type="aiAnalysisResult.fromCache ? 'info' : 'success'" size="default">
+                  {{ aiAnalysisResult.fromCache ? '🔄 来自缓存' : '⚡ 实时分析' }}
+                </el-tag>
+                <div v-if="aiAnalysisResult.fromCache && aiAnalysisResult.cacheExpiresAt" style="font-size: 12px; color: #909399; margin-top: 4px;">
+                  缓存有效期至: {{ new Date(aiAnalysisResult.cacheExpiresAt).toLocaleTimeString() }}
+                </div>
               </el-descriptions-item>
               <el-descriptions-item label="交易建议">
-                <el-tag :type="getRecommendationType(aiAnalysisResult.recommendation)" size="large">
-                  {{ getRecommendationText(aiAnalysisResult.recommendation) }}
+                <el-tag :type="getRecommendationType(aiAnalysisResult.analysis.recommendation)" size="large">
+                  {{ getRecommendationText(aiAnalysisResult.analysis.recommendation) }}
                 </el-tag>
               </el-descriptions-item>
               <el-descriptions-item label="置信度">
                 <el-progress 
                   :stroke-width="20"
-                  :percentage="aiAnalysisResult.confidence" 
-                  :color="getConfidenceColor(aiAnalysisResult.confidence)"
+                  :percentage="aiAnalysisResult.analysis.confidence" 
+                  :color="getConfidenceColor(aiAnalysisResult.analysis.confidence)"
                   :show-text="true"
                 />
               </el-descriptions-item>
               <el-descriptions-item label="风险等级">
-                <el-tag :type="getRiskLevelType(aiAnalysisResult.riskLevel)" size="default">
-                  {{ aiAnalysisResult.riskLevel }}
+                <el-tag :type="getRiskLevelType(aiAnalysisResult.analysis.riskLevel)" size="default">
+                  {{ aiAnalysisResult.analysis.riskLevel }}
                 </el-tag>
               </el-descriptions-item>
               <el-descriptions-item label="市场情绪">
-                <el-tag :type="getSentimentType(aiAnalysisResult.marketSentiment)" size="default">
-                  {{ aiAnalysisResult.marketSentiment }}
+                <el-tag :type="getSentimentType(aiAnalysisResult.analysis.marketSentiment)" size="default">
+                  {{ aiAnalysisResult.analysis.marketSentiment }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="分析数据">
+                <el-tag :type="getSentimentType(aiAnalysisResult.analysis.marketSentiment)" size="default">
+                  {{ aiAnalysisResult.analysis.marketSentiment }}
                 </el-tag>
               </el-descriptions-item>
               <el-descriptions-item label="分析理由" :span="2">
-                <div class="ai-reasoning">{{ aiAnalysisResult.reasoning }}</div>
-              </el-descriptions-item>
-              <el-descriptions-item v-if="aiAnalysisResult.suggestedPrice" label="建议价格">
-                {{ aiAnalysisResult.suggestedPrice.toFixed(2) }}
-              </el-descriptions-item>
-              <el-descriptions-item v-if="aiAnalysisResult.suggestedAmount" label="建议数量">
-                {{ aiAnalysisResult.suggestedAmount.toFixed(6) }}
+                <div class="ai-reasoning">{{ aiAnalysisResult.analysis.reasoning }}</div>
               </el-descriptions-item>
             </el-descriptions>
           </div>
@@ -583,7 +590,11 @@ const marketSelling = ref(false)
 // AI分析相关
 const selectedAISymbol = ref(store.config.symbols[0])
 const testingAI = ref(false)
-const aiAnalysisResult = ref<any>(null)
+const aiAnalysisResult = ref<{
+  analysis: any;
+  fromCache: boolean;
+  cacheExpiresAt?: number;
+} | null>(null)
 
 // 交易间隔分钟数（用于显示和输入）
 const tradeIntervalMinutes = computed({
@@ -608,6 +619,20 @@ const refreshOnce = async () => {
     refreshAnalysis() 
   }, 500)
   
+  // 页面默认加载AI分析信息
+  if (store.config.ai.enabled && store.config.symbols.length > 0) {
+    setTimeout(async () => {
+      try {
+        // 获取第一个交易对的AI分析结果
+        const result = await store.fetchAIAnalysis(store.config.symbols[0] as TradingSymbol)
+        if (result && result.analysis) {
+          aiAnalysisResult.value = result
+        }
+      } catch (error) {
+        console.error('页面默认加载AI分析失败:', error)
+      }
+    }, 1000) // 延迟1秒，等待其他数据加载完成
+  }
 }
 
 // 定时刷新循环
@@ -947,11 +972,11 @@ const testAIAnalysis = async () => {
   testingAI.value = true
   try {
     // 使用 store 的 fetchAIAnalysis 函数（带缓存）
-    const analysis = await store.fetchAIAnalysis(selectedAISymbol.value as TradingSymbol)
+    const result = await store.fetchAIAnalysis(selectedAISymbol.value as TradingSymbol)
     
-    if (analysis) {
-      aiAnalysisResult.value = analysis
-      ElMessage.success(`AI分析完成: ${analysis.recommendation} (${analysis.confidence}% 置信度)`)
+    if (result && result.analysis) {
+      aiAnalysisResult.value = result
+      ElMessage.success(`AI分析完成: ${result.analysis.recommendation} (${result.analysis.confidence}% 置信度)`)
     } else {
       ElMessage.error('AI分析失败')
     }

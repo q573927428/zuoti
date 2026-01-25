@@ -597,14 +597,22 @@ export const useTradingStore = defineStore('trading', {
       }
     },
 
-    // 获取AI分析结果
-    async fetchAIAnalysis(symbol: TradingSymbol): Promise<AIAnalysisResult | null> {
+    // 获取AI分析结果（返回包含缓存状态的对象）
+    async fetchAIAnalysis(symbol: TradingSymbol): Promise<{
+      analysis: AIAnalysisResult | null;
+      fromCache: boolean;
+      cacheExpiresAt?: number;
+    }> {
       try {
         // 检查缓存是否有效
         const cached = this.aiAnalysisCache[symbol]
         if (cached && cached.expiresAt > Date.now()) {
           console.log(`📊 使用缓存的AI分析结果: ${symbol}`)
-          return cached
+          return {
+            analysis: cached,
+            fromCache: true,
+            cacheExpiresAt: cached.expiresAt
+          }
         }
 
         const response = await $fetch('/api/trading/ai-analyze', {
@@ -615,15 +623,25 @@ export const useTradingStore = defineStore('trading', {
         if (response.success) {
           this.aiAnalysisCache[symbol] = response.analysis
           this.addDebugLog(`获取AI分析成功: ${symbol} - ${response.analysis.recommendation} (${response.analysis.confidence}%)`)
-          return response.analysis
+          return {
+            analysis: response.analysis,
+            fromCache: false,
+            cacheExpiresAt: response.analysis.expiresAt
+          }
         } else {
           this.addDebugLog(`获取AI分析失败: ${response.error || '未知错误'}`)
-          return null
+          return {
+            analysis: null,
+            fromCache: false
+          }
         }
       } catch (error: any) {
         this.addDebugLog(`获取AI分析错误: ${error.message}`)
         console.error('获取AI分析失败:', error)
-        return null
+        return {
+          analysis: null,
+          fromCache: false
+        }
       }
     },
 
