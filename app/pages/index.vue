@@ -432,11 +432,12 @@
                 </el-tag>
               </el-descriptions-item>
               <el-descriptions-item label="置信度">
-                <el-progress 
+                <el-progress
                   :stroke-width="20"
                   :percentage="aiAnalysisResult.analysis.confidence" 
                   :color="getConfidenceColor(aiAnalysisResult.analysis.confidence)"
                   :show-text="true"
+                  style="width: 120px;"
                 />
               </el-descriptions-item>
               <el-descriptions-item label="风险等级">
@@ -444,12 +445,63 @@
                   {{ aiAnalysisResult.analysis.riskLevel }}
                 </el-tag>
               </el-descriptions-item>
-              <el-descriptions-item label="市场情绪">
-                <el-tag :type="getSentimentType(aiAnalysisResult.analysis.marketSentiment)" size="default">
-                  {{ aiAnalysisResult.analysis.marketSentiment }}
-                </el-tag>
+              <el-descriptions-item label="技术指标">
+                <div v-if="aiAnalysisResult.analysis.confidenceDetails?.technicalData" class="technical-indicators">
+                  <div class="indicator-label">支撑位：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.support.toFixed(2) }}</div>
+                  <div class="indicator-label">阻力位：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.resistance.toFixed(2) }}</div>
+                  <!-- 移动平均线 -->
+                  <div class="indicator-label">MA15m：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.ma7.toFixed(2) }}/
+                    {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.ma25.toFixed(2) }}
+                    <el-tag :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.trend === 'BULLISH' ? 'success' : 'danger'" size="small">
+                      {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.trend === 'BULLISH' ? '🐂' : '🐻' }}
+                    </el-tag>
+                  </div>
+                  <div class="indicator-label">MA1h<：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.ma7.toFixed(2) }}/
+                    {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.ma25.toFixed(2) }}
+                    <el-tag :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.trend === 'BULLISH' ? 'success' : 'danger'" size="small">
+                      {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.trend === 'BULLISH' ? '🐂' : '🐻' }}
+                    </el-tag>
+                  </div>
+                  <!-- RSI指标 -->
+                  <div class="indicator-label">RSI15m：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['15m']?.toFixed(2) }}
+                    <el-tag 
+                      :type="getRSIType(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['15m'])" 
+                      size="small"
+                    >
+                      {{ getRSIStatusText(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['15m']) }}
+                    </el-tag>
+                  </div>
+                  <div class="indicator-label">RSI1h：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['1h']?.toFixed(2) }}
+                    <el-tag 
+                      :type="getRSIType(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['1h'])" 
+                      size="small"
+                    >
+                      {{ getRSIStatusText(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['1h']) }}
+                    </el-tag>
+                  </div>
+                  <!-- 成交量 -->
+                  <div class="indicator-label">成交量15m：{{ formatVolume(aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.current) }}
+                    <el-tag 
+                      :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.trend === 'INCREASING' ? 'success' : aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.trend === 'DECREASING' ? 'danger' : 'info'" 
+                      size="small"
+                    >
+                      {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.changePercent >= 0 ? '+' : '' }}{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.changePercent?.toFixed(1) }}%
+                    </el-tag>
+                  </div>
+                  <!-- 价格变化 -->
+                  <div class="indicator-label">24h变化：<el-tag 
+                      :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.priceChanges?.['24h'] >= 0 ? 'success' : 'danger'" 
+                      size="small"
+                    >
+                      {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.priceChanges?.['24h'] >= 0 ? '+' : '' }}{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.priceChanges?.['24h']?.toFixed(2) }}%
+                    </el-tag>
+                  </div>
+                </div>
+                <div v-else class="no-technical-data">
+                  <el-tag type="info" size="default">暂无技术指标数据</el-tag>
+                </div>
               </el-descriptions-item>
-              <el-descriptions-item label="分析数据">
+              <el-descriptions-item label="市场情绪">
                 <el-tag :type="getSentimentType(aiAnalysisResult.analysis.marketSentiment)" size="default">
                   {{ aiAnalysisResult.analysis.marketSentiment }}
                 </el-tag>
@@ -1030,6 +1082,30 @@ const getSentimentType = (sentiment: string) => {
     'NEUTRAL': 'info'
   }
   return typeMap[sentiment] || 'info'
+}
+
+// 技术指标辅助函数
+const getRSIType = (rsi: number | undefined) => {
+  if (!rsi) return 'info'
+  if (rsi > 70) return 'danger'  // 超买
+  if (rsi < 30) return 'success' // 超卖
+  if (rsi > 50) return 'success' // 看涨
+  return 'warning' // 看跌
+}
+
+const getRSIStatusText = (rsi: number | undefined) => {
+  if (!rsi) return '-'
+  if (rsi > 70) return '超买'
+  if (rsi < 30) return '超卖'
+  if (rsi > 50) return '看涨'
+  return '看跌'
+}
+
+const formatVolume = (volume: number | undefined) => {
+  if (!volume) return '0'
+  if (volume >= 1000000) return `${(volume / 1000000).toFixed(2)}M`
+  if (volume >= 1000) return `${(volume / 1000).toFixed(2)}K`
+  return volume.toFixed(2)
 }
 // 从交易状态面板市价买入
 const handleMarketBuyFromStatus = async () => {

@@ -85,12 +85,12 @@ export const useTradingStore = defineStore('trading', {
       // AI分析配置
       ai: {
         enabled: true,
-        analysisInterval: 24 * 60 * 60 * 1000,    // 10分钟
+        analysisInterval: 24 * 60 * 60 * 1000,    // 24小时
         minConfidence: 60,                   // 最小置信度70%
         maxRiskLevel: 'MEDIUM' as const,     // 最大风险等级：中风险
         useForBuyDecisions: true,            // 用于买入决策
         useForSellDecisions: true,           // 用于卖出决策
-        cacheDuration: 10 * 60 * 1000,        // 缓存30分钟
+        cacheDuration: 10 * 60 * 1000,        // 缓存10分钟
       },
     } as SystemConfig,
 

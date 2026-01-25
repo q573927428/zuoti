@@ -426,7 +426,7 @@
               <el-input-number 
                 v-model="aiAnalysisIntervalMinutes" 
                 :min="1" 
-                :max="60" 
+                :max="1500" 
                 :step="1"
                 @change="handleAIAnalysisIntervalChange"
               />
@@ -644,7 +644,7 @@ const resetToDefaults = async () => {
     store.config = {
       isTestnet: false,
       isAutoTrading: false,
-      symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT'],
+      symbols: ['ETH/USDT', 'BTC/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT'],
       investmentAmount: 20,
       amplitudeThreshold: 3,
       trendThreshold: 5.0,
@@ -696,12 +696,12 @@ const resetToDefaults = async () => {
       tradeInterval: 60 * 60 * 1000,
       ai: {
         enabled: true,
-        analysisInterval: 10 * 60 * 1000,
-        minConfidence: 70,
+        analysisInterval: 24 * 60 * 60 * 1000,
+        minConfidence: 60,
         maxRiskLevel: 'MEDIUM',
         useForBuyDecisions: true,
         useForSellDecisions: true,
-        cacheDuration: 5 * 60 * 1000,
+        cacheDuration: 10 * 60 * 1000,
       },
     }
     

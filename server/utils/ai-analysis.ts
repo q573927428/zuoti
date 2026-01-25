@@ -1,6 +1,7 @@
 import type { TradingSymbol, AIAnalysisResult, Kline } from '../../types/trading'
 import { fetchKlines } from './binance'
-
+import { readFileSync } from 'fs'
+import { join } from 'path'
 // 分析结果缓存
 const analysisCache = new Map<string, AIAnalysisResult>()
 
@@ -12,7 +13,7 @@ export class AIAnalysisService {
   private apiUrl: string
   private cacheDuration: number
 
-  constructor(apiKey: string, apiUrl: string = 'https://api.deepseek.com', cacheDuration: number = 30 * 60 * 1000) {
+  constructor(apiKey: string, apiUrl: string = 'https://api.deepseek.com', cacheDuration: number = 10 * 60 * 1000) {
     this.apiKey = apiKey
     this.apiUrl = apiUrl
     this.cacheDuration = cacheDuration
@@ -239,6 +240,9 @@ RSI指标:
           finalConfidence = Math.round((aiConfidence * 0.6) + (localConfidence * 0.4))
           finalConfidence = Math.min(100, Math.max(0, finalConfidence))
           
+          // 构建技术指标数据
+          const technicalData = this.buildTechnicalData(marketData)
+          
           // 构建完整的置信度详情
           confidenceDetails = {
             aiConfidence,
@@ -248,19 +252,12 @@ RSI指标:
             rsiScore: details.rsiScore,
             volumeScore: details.volumeScore,
             srScore: details.srScore,
-            finalConfidence
+            finalConfidence,
+            technicalData
           }
           
           // 添加详细的诊断日志
-          console.log(`🔍 AI分析诊断 - ${symbol}:`)
-          // console.log(`   AI原始置信度: ${aiConfidence}%`)
-          // console.log(`   本地技术指标置信度: ${localConfidence}%`)
-          // console.log(`   价格变化评分: ${details.priceScore}`)
-          // console.log(`   移动平均线评分: ${details.maScore}`)
-          // console.log(`   RSI评分: ${details.rsiScore}`)
-          // console.log(`   成交量评分: ${details.volumeScore}`)
-          // console.log(`   支撑阻力评分: ${details.srScore}`)
-          console.log(`   最终置信度: ${finalConfidence}% (AI:${aiConfidence}×0.6 + 本地:${localConfidence}×0.4)`)
+          console.log(`🔍 AI分析诊断 - ${symbol}:最终置信度: ${finalConfidence}% (AI:${aiConfidence}×0.6 + 本地:${localConfidence}×0.4)`)
         } else {
           console.log(`🔍 AI分析诊断 - ${symbol}: 无市场数据，使用AI原始置信度: ${aiConfidence}%`)
         }
@@ -889,6 +886,79 @@ RSI指标:
     if (trend === 'DECREASING') return '📉'
     return '➡️'
   }
+
+  /**
+   * 构建技术指标数据
+   */
+  private buildTechnicalData(marketData: any): any {
+    const { currentPrice, priceChanges, technicalIndicators, volumeAnalysis } = marketData
+    
+    // 计算价格位置百分比
+    const support = technicalIndicators.supportResistance.support
+    const resistance = technicalIndicators.supportResistance.resistance
+    const priceRange = resistance - support
+    const pricePosition = priceRange > 0 ? ((currentPrice - support) / priceRange) * 100 : 0
+    
+    // 获取RSI状态
+    const getRSIStatus = (rsi: number): 'OVERSOLD' | 'OVERBOUGHT' | 'NEUTRAL' => {
+      if (rsi < 30) return 'OVERSOLD'
+      if (rsi > 70) return 'OVERBOUGHT'
+      return 'NEUTRAL'
+    }
+    
+    return {
+      // 支撑位和阻力位
+      support,
+      resistance,
+      currentPrice,
+      pricePosition: Math.round(pricePosition * 10) / 10, // 保留一位小数
+      
+      // 移动平均线数据
+      movingAverages: {
+        '15m': {
+          ma7: technicalIndicators.movingAverages['15m'].ma7,
+          ma25: technicalIndicators.movingAverages['15m'].ma25,
+          trend: technicalIndicators.movingAverages['15m'].trend
+        },
+        '1h': {
+          ma7: technicalIndicators.movingAverages['1h'].ma7,
+          ma25: technicalIndicators.movingAverages['1h'].ma25,
+          trend: technicalIndicators.movingAverages['1h'].trend
+        }
+      },
+      
+      // RSI指标数据
+      rsi: {
+        '15m': technicalIndicators.rsi['15m'],
+        '1h': technicalIndicators.rsi['1h'],
+        status15m: getRSIStatus(technicalIndicators.rsi['15m']),
+        status1h: getRSIStatus(technicalIndicators.rsi['1h'])
+      },
+      
+      // 成交量数据
+      volume: {
+        '15m': {
+          average: volumeAnalysis.averageVolume['15m'],
+          current: volumeAnalysis.averageVolume['15m'] * (1 + volumeAnalysis.volumeChange15m / 100),
+          changePercent: volumeAnalysis.volumeChange15m,
+          trend: volumeAnalysis.volumeTrend
+        },
+        '1h': {
+          average: volumeAnalysis.averageVolume['1h'],
+          current: volumeAnalysis.averageVolume['1h'],
+          changePercent: 0, // 1小时成交量变化需要额外计算
+          trend: 'STABLE' as const
+        }
+      },
+      
+      // 价格变化数据
+      priceChanges: {
+        '1h': priceChanges['1h'],
+        '4h': priceChanges['4h'],
+        '24h': priceChanges['24h']
+      }
+    }
+  }
 }
 
 /**
@@ -898,7 +968,7 @@ let aiServiceInstance: AIAnalysisService | null = null
 
 export function getAIAnalysisService(): AIAnalysisService {
   if (!aiServiceInstance) {
-    // 使用useRuntimeConfig()读取配置，与binance.ts保持一致
+    // 使用useRuntimeConfig()读取API配置
     const config = useRuntimeConfig()
     
     const apiKey = config.deepseekApiKey
@@ -908,7 +978,18 @@ export function getAIAnalysisService(): AIAnalysisService {
       throw new Error('DeepSeek API密钥未配置，请设置DEEPSEEK_API_KEY环境变量')
     }
     
-    aiServiceInstance = new AIAnalysisService(apiKey, apiUrl)
+    // 从配置文件读取cacheDuration
+    let cacheDuration = 10 * 60 * 1000 // 默认值：10分钟
+    try {
+      const configPath = join(process.cwd(), 'data', 'trading-config.json')
+      const configFile = readFileSync(configPath, 'utf-8')
+      const tradingConfig = JSON.parse(configFile)
+      cacheDuration = tradingConfig.config?.ai?.cacheDuration || cacheDuration
+    } catch (error) {
+      console.warn('无法读取trading-config.json，使用默认缓存时长:', error)
+    }
+    
+    aiServiceInstance = new AIAnalysisService(apiKey, apiUrl, cacheDuration)
   }
   
   return aiServiceInstance

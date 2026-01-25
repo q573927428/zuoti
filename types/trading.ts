@@ -1,5 +1,5 @@
 // 交易系统类型定义
-export type TradingSymbol = 'ETH/USDT' | 'BTC/USDT' | 'BNB/USDT' | 'SOL/USDT'
+export type TradingSymbol = 'ETH/USDT' | 'BTC/USDT' | 'BNB/USDT' | 'SOL/USDT' | 'XRP/USDT'
 
 export type TradingState = 'IDLE' | 'BUY_ORDER_PLACED' | 'BOUGHT' | 'SELL_ORDER_PLACED' | 'DONE'
 
@@ -173,6 +173,60 @@ export interface AIAnalysisResult {
     volumeScore: number // 成交量评分
     srScore: number // 支撑阻力评分
     finalConfidence: number // 最终置信度
+    
+    // 新增技术指标数据
+    technicalData?: {
+      // 支撑位和阻力位
+      support: number
+      resistance: number
+      currentPrice: number
+      pricePosition?: number // 当前价格位置百分比 (0-100)
+      
+      // 移动平均线数据
+      movingAverages?: {
+        '15m'?: {
+          ma7: number
+          ma25: number
+          trend: 'BULLISH' | 'BEARISH'
+        }
+        '1h'?: {
+          ma7: number
+          ma25: number
+          trend: 'BULLISH' | 'BEARISH'
+        }
+      }
+      
+      // RSI指标数据
+      rsi?: {
+        '15m': number
+        '1h': number
+        status15m?: 'OVERSOLD' | 'OVERBOUGHT' | 'NEUTRAL'
+        status1h?: 'OVERSOLD' | 'OVERBOUGHT' | 'NEUTRAL'
+      }
+      
+      // 成交量数据
+      volume?: {
+        '15m': {
+          average: number
+          current: number
+          changePercent: number
+          trend: 'INCREASING' | 'DECREASING' | 'STABLE'
+        }
+        '1h': {
+          average: number
+          current: number
+          changePercent: number
+          trend: 'INCREASING' | 'DECREASING' | 'STABLE'
+        }
+      }
+      
+      // 价格变化数据
+      priceChanges?: {
+        '1h': number
+        '4h': number
+        '24h': number
+      }
+    }
   }
   timestamp: number
   expiresAt: number
