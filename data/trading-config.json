@@ -72,15 +72,15 @@
   },
   "stats": {
     "totalTrades": 8,
-    "successfulTrades": 4,
+    "successfulTrades": 5,
     "failedTrades": 1,
-    "totalProfit": 0.03,
-    "totalProfitRate": 0.13333333333333333,
-    "annualizedReturn": 48.666666666666664,
+    "totalProfit": 0.06,
+    "totalProfitRate": 0.06,
+    "annualizedReturn": 10.95,
     "currentDate": "2026-01-25",
     "tradedSymbols": {
       "SOL/USDT": 1
     }
   },
-  "lastSaved": 1769278694218
+  "lastSaved": 1769320702303
 }

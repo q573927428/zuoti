@@ -31,10 +31,10 @@
             </div>
           </template>
           <el-row :gutter="10">
-            <el-col :xs="12" :sm="8" :md="4" v-for="currency in ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'SOL']" :key="currency">
+            <el-col :xs="12" :sm="6" :md="3" v-for="currency in ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE']" :key="currency">
               <div class="balance-item">
                 <div class="balance-currency">{{ currency }}</div>
-                <div class="balance-amount">{{ (store.balances[currency]?.free || 0).toFixed(currency === 'USDT' || currency === 'USDC' ? 2 : 6) }}</div>
+                <div class="balance-amount">{{ (store.balances[currency]?.free || 0).toFixed(currency === 'USDT' || currency === 'USDC' ? 2 : 5) }}</div>
               </div>
             </el-col>
           </el-row>

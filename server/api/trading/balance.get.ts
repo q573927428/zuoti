@@ -23,6 +23,8 @@ export default defineEventHandler(async (event) => {
           ETH: { free: 0, used: 0, total: 0 },
           BNB: { free: 0, used: 0, total: 0 },
           SOL: { free: 0, used: 0, total: 0 },
+          XRP: { free: 0, used: 0, total: 0 },
+          DOGE: { free: 0, used: 0, total: 0 },
         },
         isSimulated: true,
         message: '当前使用模拟余额数据（API不可用）'
@@ -30,7 +32,7 @@ export default defineEventHandler(async (event) => {
     }
     
     // 提取主要币种余额
-    const currencies = ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'SOL']
+    const currencies = ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE']
     const result: Record<string, { free: number; used: number; total: number }> = {}
     
     for (const currency of currencies) {
@@ -59,6 +61,8 @@ export default defineEventHandler(async (event) => {
         ETH: { free: 0, used: 0, total: 0 },
         BNB: { free: 0, used: 0, total: 0 },
         SOL: { free: 0, used: 0, total: 0 },
+        XRP: { free: 0, used: 0, total: 0 },
+        DOGE: { free: 0, used: 0, total: 0 },
       },
       isSimulated: true,
       message: '当前使用模拟余额数据（API错误）'
