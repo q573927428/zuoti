@@ -598,10 +598,16 @@ let timer: number | null = null, stopped = false
 
 // 执行一次数据刷新
 const refreshOnce = async () => {
-  await refreshAnalysis()
-  await refreshBalance()
-  await store.loadPersistedData()
-  await store.fetchCircuitBreakerState()
+  await Promise.all([
+    refreshBalance(),
+    store.loadPersistedData(),
+    store.fetchCircuitBreakerState()
+  ])
+  
+  setTimeout(() => {
+    refreshAnalysis() 
+  }, 500)
+  
 }
 
 // 定时刷新循环
@@ -730,13 +736,16 @@ const refreshAnalysis = async () => {
 // 刷新AI分析结果
 const refreshAIAnalysis = async () => {
   try {
-    for (const symbol of store.config.symbols) {
-      await store.fetchAIAnalysis(symbol as TradingSymbol)
-    }
+    // 使用 Promise.all 并行调用所有交易对的AI分析
+    const promises = store.config.symbols.map(symbol => 
+      store.fetchAIAnalysis(symbol as TradingSymbol)
+    )
+    await Promise.all(promises)
   } catch (error) {
     console.error('刷新AI分析失败:', error)
   }
 }
+
 
 // 刷新当前价格
 const refreshCurrentPrices = async () => {
@@ -937,16 +946,14 @@ const getScoreColor = (score: number | undefined) => {
 const testAIAnalysis = async () => {
   testingAI.value = true
   try {
-    const result = await $fetch('/api/trading/ai-analyze', {
-      method: 'POST',
-      body: { symbol: selectedAISymbol.value }
-    }) as any
+    // 使用 store 的 fetchAIAnalysis 函数（带缓存）
+    const analysis = await store.fetchAIAnalysis(selectedAISymbol.value as TradingSymbol)
     
-    if (result.success) {
-      aiAnalysisResult.value = result.analysis
-      ElMessage.success(`AI分析完成: ${result.analysis.recommendation} (${result.analysis.confidence}% 置信度)`)
+    if (analysis) {
+      aiAnalysisResult.value = analysis
+      ElMessage.success(`AI分析完成: ${analysis.recommendation} (${analysis.confidence}% 置信度)`)
     } else {
-      ElMessage.error(result.error || 'AI分析失败')
+      ElMessage.error('AI分析失败')
     }
   } catch (error: any) {
     ElMessage.error('AI分析请求失败: ' + error.message)
