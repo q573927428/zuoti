@@ -67,7 +67,7 @@
       "maxRiskLevel": "MEDIUM",
       "useForBuyDecisions": true,
       "useForSellDecisions": true,
-      "cacheDuration": 600000
+      "cacheDuration": 900000
     }
   },
   "stats": {

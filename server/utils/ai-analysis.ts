@@ -23,18 +23,17 @@ export class AIAnalysisService {
    * 分析交易对
    */
   async analyzeSymbol(symbol: TradingSymbol, marketData?: any): Promise<AIAnalysisResult> {
-    // 检查缓存
-    const cacheKey = `${symbol}_${Date.now() - (Date.now() % this.cacheDuration)}`
+    // 检查缓存 - 使用符号作为缓存键
+    const cacheKey = symbol
     const cached = analysisCache.get(cacheKey)
     
     if (cached && cached.expiresAt > Date.now()) {
-      console.log(`📊 使用缓存的AI分析结果: ${symbol}`)
+      console.log(`📊 使用缓存的AI分析结果: ${symbol} (剩余时间: ${Math.round((cached.expiresAt - Date.now()) / 1000 / 60 * 10) / 10}分钟)`)
       return cached
     }
 
     try {
-      console.log(`🤖 开始AI分析: ${symbol}`)
-      
+
       // 获取市场数据
       const marketData = await this.fetchMarketData(symbol)
       
@@ -49,8 +48,6 @@ export class AIAnalysisService {
       
       // 缓存结果
       analysisCache.set(cacheKey, result)
-      
-      console.log(`✅ AI分析完成: ${symbol} - 推荐: ${result.recommendation}, 置信度: ${result.confidence}%`)
       
       return result
     } catch (error) {
@@ -256,8 +253,6 @@ RSI指标:
             technicalData
           }
           
-          // 添加详细的诊断日志
-          console.log(`🔍 AI分析诊断 - ${symbol}:最终置信度: ${finalConfidence}% (AI:${aiConfidence}×0.6 + 本地:${localConfidence}×0.4)`)
         } else {
           console.log(`🔍 AI分析诊断 - ${symbol}: 无市场数据，使用AI原始置信度: ${aiConfidence}%`)
         }
@@ -348,8 +343,7 @@ RSI指标:
    */
   private async fetchMarketData(symbol: TradingSymbol): Promise<any> {
     try {
-      console.log(`📊 获取市场数据: ${symbol}`)
-      
+
       // 获取多个时间框架的K线数据
       const klines15m = await fetchKlines(symbol, '15m', 48) // 最近12小时
       const klines1h = await fetchKlines(symbol, '1h', 24)   // 最近24小时
@@ -965,9 +959,23 @@ RSI指标:
  * 获取AI分析服务实例
  */
 let aiServiceInstance: AIAnalysisService | null = null
+let lastConfigCacheDuration: number | null = null
 
 export function getAIAnalysisService(): AIAnalysisService {
-  if (!aiServiceInstance) {
+  // 从配置文件读取cacheDuration
+  let cacheDuration = 10 * 60 * 1000 // 默认值：10分钟
+  try {
+    const configPath = join(process.cwd(), 'data', 'trading-config.json')
+    const configFile = readFileSync(configPath, 'utf-8')
+    const tradingConfig = JSON.parse(configFile)
+    cacheDuration = tradingConfig.config?.ai?.cacheDuration || cacheDuration
+  } catch (error) {
+    console.warn('无法读取trading-config.json，使用默认缓存时长:', error)
+  }
+  
+  // 检查是否需要创建新实例或更新现有实例
+  if (!aiServiceInstance || lastConfigCacheDuration !== cacheDuration) {
+
     // 使用useRuntimeConfig()读取API配置
     const config = useRuntimeConfig()
     
@@ -978,18 +986,13 @@ export function getAIAnalysisService(): AIAnalysisService {
       throw new Error('DeepSeek API密钥未配置，请设置DEEPSEEK_API_KEY环境变量')
     }
     
-    // 从配置文件读取cacheDuration
-    let cacheDuration = 10 * 60 * 1000 // 默认值：10分钟
-    try {
-      const configPath = join(process.cwd(), 'data', 'trading-config.json')
-      const configFile = readFileSync(configPath, 'utf-8')
-      const tradingConfig = JSON.parse(configFile)
-      cacheDuration = tradingConfig.config?.ai?.cacheDuration || cacheDuration
-    } catch (error) {
-      console.warn('无法读取trading-config.json，使用默认缓存时长:', error)
-    }
-    
     aiServiceInstance = new AIAnalysisService(apiKey, apiUrl, cacheDuration)
+    lastConfigCacheDuration = cacheDuration
+    
+    // 清理旧的缓存，因为缓存时长可能已经改变
+    if (analysisCache && analysisCache.clear) {
+      analysisCache.clear()
+    }
   }
   
   return aiServiceInstance

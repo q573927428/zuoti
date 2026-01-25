@@ -82,17 +82,13 @@ export class StateHandlers {
     try {
       const aiService = getAIAnalysisService()
       const analysis = await aiService.analyzeSymbol(symbol)
-      
-      console.log(
-        `🤖 AI分析结果: ${symbol} | 推荐: ${analysis.recommendation} | 置信度: ${analysis.confidence}% | 风险等级: ${analysis.riskLevel} | 市场情绪: ${analysis.marketSentiment}`
-      );
-      console.log(`   - 理由: ${analysis.reasoning}`)
-      
+
       // 检查是否通过AI分析
       const isPassed = this.evaluateAIAnalysis(analysis, action)
       
       if (isPassed) {
-        console.log(`✅ AI分析通过: ${symbol} - ${action.toUpperCase()} 操作获得AI支持`)
+        console.log(`✅ AI分析通过: ${symbol} - ${action.toUpperCase()} 操作获得AI支持 | 推荐: ${analysis.recommendation} | 置信度: ${analysis.confidence}% | 风险等级: ${analysis.riskLevel} | 市场情绪: ${analysis.marketSentiment}`)
+        console.log(`   - 理由: ${analysis.reasoning}`)
       } else {
         console.log(`❌ AI分析未通过: ${symbol} - ${action.toUpperCase()} 操作未获得AI支持`)
       }
