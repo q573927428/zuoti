@@ -661,7 +661,7 @@ export class StateHandlers {
     )
     
     if (!result.bestSymbol) {
-      console.log('⏳ 没有找到符合要求的交易对，等待下次循环')
+      console.log(`⏳ 当前交易对：${tradingStatus.symbol} 不满足交易限制，等待下次循环`)
       return tradingStatus
     }
     

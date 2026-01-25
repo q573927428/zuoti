@@ -71,17 +71,16 @@
     }
   },
   "stats": {
-    "totalTrades": 7,
-    "successfulTrades": 3,
+    "totalTrades": 8,
+    "successfulTrades": 4,
     "failedTrades": 1,
-    "totalProfit": 0.08,
+    "totalProfit": 0.03,
     "totalProfitRate": 0.13333333333333333,
     "annualizedReturn": 48.666666666666664,
-    "currentDate": "2026-01-24",
+    "currentDate": "2026-01-25",
     "tradedSymbols": {
-      "SOL/USDT": 6,
-      "ETH/USDT": 14
+      "SOL/USDT": 1
     }
   },
-  "lastSaved": 1769263254376
+  "lastSaved": 1769278694218
 }
