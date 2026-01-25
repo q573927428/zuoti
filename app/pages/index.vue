@@ -315,13 +315,18 @@
             <!-- 如果启用多时间框架，显示确认状态 -->
             <el-table-column v-if="store.config.multiTimeframe?.enabled" label="确认状态">
               <template #default="{ row }">
-                <el-tag 
+                <el-tooltip
                   v-if="row.isValid !== undefined"
-                  :type="row.isValid ? 'success' : 'warning'" 
-                  size="small"
+                  :content="getConfirmationStatus(row).tooltip"
+                  placement="top"
                 >
-                  {{ row.isValid ? '✅ 通过' : '❌ 未过' }}
-                </el-tag>
+                  <el-tag 
+                    :type="getConfirmationStatus(row).type" 
+                    size="small"
+                  >
+                    {{ getConfirmationStatus(row).text }}
+                  </el-tag>
+                </el-tooltip>
                 <span v-else style="color: #909399;">-</span>
               </template>
             </el-table-column>
@@ -866,6 +871,35 @@ const isTimeframePassed = (analysis: any) => {
   if (!analysis) return false
   // 需要同时满足：振幅达标 && 趋势不被过滤
   return !analysis.isTrendFiltered && analysis.amplitude >= store.config.amplitudeThreshold
+}
+
+// 检查15m振幅是否达标
+const is15mAmplitudePassed = (row: any): boolean => {
+  if (!row.timeframes || !row.timeframes['15m']) return false
+  const analysis15m = row.timeframes['15m']
+  return !analysis15m.isTrendFiltered && analysis15m.amplitude >= store.config.amplitudeThreshold
+}
+
+// 获取确认状态显示信息
+const getConfirmationStatus = (row: any): { text: string; type: 'success' | 'warning' | 'danger' | 'info' | 'primary'; tooltip?: string } => {
+  const isValid = row.isValid === true
+  const is15mPassed = is15mAmplitudePassed(row)
+  
+  // 如果评分通过但15m未达标，显示"未过"并给出提示
+  if (isValid && !is15mPassed) {
+    return {
+      text: '❌ 未过',
+      type: 'warning',
+      tooltip: '评分通过但15分钟振幅未达标'
+    }
+  }
+  
+  // 正常情况
+  return {
+    text: isValid ? '✅ 通过' : '❌ 未过',
+    type: isValid ? 'success' : 'warning',
+    tooltip: isValid ? '多时间框架确认通过' : '多时间框架确认未通过'
+  }
 }
 
 // 获取评分颜色
