@@ -313,7 +313,7 @@
             </el-table-column>
             
             <!-- 如果启用多时间框架，显示确认状态 -->
-            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="确认状态">
+            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="确认状态" width="150">
               <template #default="{ row }">
                 <el-tooltip
                   v-if="row.isValid !== undefined"
@@ -648,13 +648,6 @@ const aiAnalysisResult = ref<{
   cacheExpiresAt?: number;
 } | null>(null)
 
-// 交易间隔分钟数（用于显示和输入）
-const tradeIntervalMinutes = computed({
-  get: () => Math.round(store.config.tradeInterval / 1000 / 60),
-  set: (minutes) => {
-    store.config.tradeInterval = minutes * 60 * 1000
-  }
-})
 
 // 定时器 & 停止标志
 let timer: number | null = null, stopped = false
@@ -804,8 +797,17 @@ const refreshAIAnalysis = async () => {
     )
     const results = await Promise.all(promises)
     
-    // 将第一个交易对的结果设置到 aiAnalysisResult
-    if (results.length > 0 && results[0] && results[0].analysis) {
+    // 找到当前选中交易对的结果
+    const selectedSymbol = selectedAISymbol.value
+    const selectedResult = results.find(result => 
+      result && result.analysis && result.analysis.symbol === selectedSymbol
+    )
+    
+    // 将选中交易对的结果设置到 aiAnalysisResult
+    if (selectedResult && selectedResult.analysis) {
+      aiAnalysisResult.value = selectedResult
+    } else if (results.length > 0 && results[0] && results[0].analysis) {
+      // 如果没找到选中项，回退到第一个交易对（保持向后兼容）
       aiAnalysisResult.value = results[0]
     }
   } catch (error) {
@@ -968,13 +970,14 @@ const getConfirmationStatus = (row: any): { text: string; type: 'success' | 'war
       const riskLevelText = aiAnalysis.riskLevel
       const sentimentText = aiAnalysis.marketSentiment
       // 使用换行符分隔，使tooltip更易读
-      aiDetails = `多时间框架通过但AI分析未通过\n\n` +
-                  `AI分析结果:\n` +
-                  `• 交易对: ${symbol}\n` +
-                  `• 推荐: ${recommendationText}\n` +
-                  `• 置信度: ${aiAnalysis.confidence}%\n` +
-                  `• 风险等级: ${riskLevelText}\n` +
-                  `• 市场情绪: ${sentimentText}`
+      aiDetails = `多时间框架通过但AI分析未通过<br>` +
+                `AI分析结果:<br>` +
+                `• 交易对: ${symbol}<br>` +
+                `• 推荐: ${recommendationText}<br>` +
+                `• 置信度: ${aiAnalysis.confidence}%<br>` +
+                `• 风险等级: ${riskLevelText}<br>` +
+                `• 市场情绪: ${sentimentText}`
+
     }
     
     return {
