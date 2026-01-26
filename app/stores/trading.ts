@@ -673,10 +673,10 @@ export const useTradingStore = defineStore('trading', {
       // 检查交易建议
       if (action === 'buy') {
         // 买入操作需要BUY或HOLD建议
-        return analysis.recommendation === 'BUY' || analysis.recommendation === 'HOLD'
+        return analysis.recommendation === 'BUY' || analysis.recommendation === 'HOLD' || analysis.recommendation === 'AVOID'
       } else if (action === 'sell') {
         // 卖出操作需要SELL或HOLD建议
-        return analysis.recommendation === 'SELL' || analysis.recommendation === 'HOLD'
+        return analysis.recommendation === 'SELL' || analysis.recommendation === 'HOLD' || analysis.recommendation === 'AVOID'
       }
 
       return false
