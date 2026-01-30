@@ -15,611 +15,618 @@
       </el-header>
 
       <el-main class="main-content">
-        <!-- 账户余额 -->
-        <el-card shadow="hover" class="balance-card">
-          <template #header>
-            <div class="card-header">
-              <span>账户余额</span>
-              <div>
-                <el-button type="primary" size="small" @click="testConnection" :loading="testing">
-                  测试连接
-                </el-button>
-                <el-button type="success" size="small" @click="refreshBalance" :loading="loadingBalance">
-                  刷新余额
-                </el-button>
-              </div>
-            </div>
-          </template>
-          <el-row :gutter="10">
-            <el-col :xs="12" :sm="6" :md="3" v-for="currency in ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE']" :key="currency">
-              <div class="balance-item">
-                <div class="balance-currency">{{ currency }}</div>
-                <div class="balance-amount">{{ (store.balances[currency]?.free || 0).toFixed(currency === 'USDT' || currency === 'USDC' ? 2 : 5) }}</div>
-              </div>
-            </el-col>
-          </el-row>
-        </el-card>
-
-        <!-- 统计卡片 -->
-        <el-row :gutter="20" class="stats-row">
-          <el-col :xs="12" :sm="12" :md="6">
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-item">
-                <div class="stat-label">总交易次数</div>
-                <div class="stat-value">{{ store.stats.totalTrades }}</div>
-              </div>
-            </el-card>
-          </el-col>
-          <el-col :xs="12" :sm="12" :md="6">
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-item">
-                <div class="stat-label">成功交易</div>
-                <div class="stat-value success">{{ store.stats.successfulTrades }}</div>
-              </div>
-            </el-card>
-          </el-col>
-          <el-col :xs="12" :sm="12" :md="6">
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-item">
-                <div class="stat-label">总收益 (USDT)</div>
-                <div class="stat-value" :class="store.stats.totalProfit >= 0 ? 'success' : 'danger'">
-                  {{ store.stats.totalProfit >= 0 ? '+' : '' }}{{ store.stats.totalProfit.toFixed(2) }}
+        <el-row :gutter="20"> 
+          <el-col :xs="24" :sm="24" :md="8" :lg="8">
+            <!-- 账户余额 -->
+            <el-card shadow="hover" class="balance-card">
+              <template #header>
+                <div class="card-header">
+                  <span>账户余额</span>
+                  <div>
+                    <el-button type="primary" size="small" @click="testConnection" :loading="testing">
+                      测试连接
+                    </el-button>
+                    <el-button type="success" size="small" @click="refreshBalance" :loading="loadingBalance">
+                      刷新余额
+                    </el-button>
+                  </div>
                 </div>
+              </template>
+              <el-row :gutter="10">
+                <el-col :xs="12" :sm="12" :md="12" v-for="currency in ['USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE']" :key="currency">
+                  <div class="balance-item">
+                    <div class="balance-currency">{{ currency }}</div>
+                    <div class="balance-amount">{{ (store.balances[currency]?.free || 0).toFixed(currency === 'USDT' || currency === 'USDC' ? 2 : 5) }}</div>
+                  </div>
+                </el-col>
+              </el-row>
+            </el-card>
+
+            <!-- 统计卡片 -->
+            <el-row :gutter="20" class="stats-row">
+              <el-col :xs="12" :sm="12" :md="12">
+                <el-card shadow="hover" class="stat-card">
+                  <div class="stat-item">
+                    <div class="stat-label">总交易次数</div>
+                    <div class="stat-value">{{ store.stats.totalTrades }}</div>
+                  </div>
+                </el-card>
+              </el-col>
+              <el-col :xs="12" :sm="12" :md="12">
+                <el-card shadow="hover" class="stat-card">
+                  <div class="stat-item">
+                    <div class="stat-label">成功交易</div>
+                    <div class="stat-value success">{{ store.stats.successfulTrades }}</div>
+                  </div>
+                </el-card>
+              </el-col>
+              <el-col :xs="12" :sm="12" :md="12">
+                <el-card shadow="hover" class="stat-card">
+                  <div class="stat-item">
+                    <div class="stat-label">总收益 (USDT)</div>
+                    <div class="stat-value" :class="store.stats.totalProfit >= 0 ? 'success' : 'danger'">
+                      {{ store.stats.totalProfit >= 0 ? '+' : '' }}{{ store.stats.totalProfit.toFixed(2) }}
+                    </div>
+                  </div>
+                </el-card>
+              </el-col>
+              <el-col :xs="12" :sm="12" :md="12">
+                <el-card shadow="hover" class="stat-card">
+                  <div class="stat-item">
+                    <div class="stat-label">年化收益率</div>
+                    <div class="stat-value" :class="store.stats.annualizedReturn >= 0 ? 'success' : 'danger'">
+                      {{ store.stats.annualizedReturn >= 0 ? '+' : '' }}{{ store.stats.annualizedReturn.toFixed(2) }}%
+                    </div>
+                  </div>
+                </el-card>
+              </el-col>
+            </el-row>
+
+            <!-- 熔断器状态 -->
+            <el-card shadow="hover" class="status-card">
+              <template #header>
+                <div class="card-header">
+                  <span>熔断器状态</span>
+                  <div>
+                    <el-tag 
+                      :type="store.circuitBreakerState.isTripped ? 'danger' : 'success'" 
+                      size="large"
+                    >
+                      {{ store.circuitBreakerState.isTripped ? '🔒 已熔断' : '✅ 正常' }}
+                    </el-tag>
+                    <el-button 
+                      v-if="store.circuitBreakerState.isTripped"
+                      type="warning" 
+                      size="small" 
+                      @click="handleResetCircuitBreaker"
+                      :loading="resettingCircuitBreaker"
+                    >
+                      重置熔断器
+                    </el-button>
+                  </div>
+                </div>
+              </template>
+              <el-descriptions :column="2" border>
+                <el-descriptions-item label="连续失败次数">
+                  <el-tag :type="store.circuitBreakerState.consecutiveFailures > 0 ? 'warning' : 'success'">
+                    {{ store.circuitBreakerState.consecutiveFailures }}
+                  </el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="当日亏损(USDT)">
+                  <span :class="store.circuitBreakerState.dailyLoss < 0 ? 'text-danger' : 'text-success'">
+                    {{ store.circuitBreakerState.dailyLoss.toFixed(2) }}
+                  </span>
+                </el-descriptions-item>
+                <el-descriptions-item label="连续失败">
+                  {{ store.config.circuitBreaker.consecutiveFailures }}次<br/>
+                </el-descriptions-item>
+                <el-descriptions-item label="日亏损数">
+                  {{ store.config.circuitBreaker.dailyLossLimit }} USDT
+                </el-descriptions-item>
+                <el-descriptions-item v-if="store.circuitBreakerState.isTripped && store.circuitBreakerState.trippedAt" label="熔断时间" :span="2">
+                  {{ new Date(store.circuitBreakerState.trippedAt).toLocaleString() }}
+                </el-descriptions-item>
+                <el-descriptions-item v-if="store.circuitBreakerState.reason" label="熔断原因" :span="3">
+                  <el-tag type="danger">{{ store.circuitBreakerState.reason }}</el-tag>
+                </el-descriptions-item>
+              </el-descriptions>
+            </el-card>
+
+            <!-- 交易状态 -->
+            <el-card shadow="hover" class="status-card">
+              <template #header>
+                <div class="card-header">
+                  <span>交易状态（全部）</span>
+                  <el-tag :type="getStateType(store.tradingStatus.state)" size="large">
+                    {{ getStateText(store.tradingStatus.state) }}
+                  </el-tag>
+                </div>
+              </template>
+              <div class="status-content">
+                <el-descriptions :column="2" border>
+                  <el-descriptions-item label="今日交易">
+                    <el-tag :type="getTodayCompletedTrades() >= store.config.dailyTradeLimit && store.config.dailyTradeLimit > 0 ? 'danger' : 'success'">
+                      {{ getTodayCompletedTrades() }}/{{ store.config.dailyTradeLimit || '无限制' }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="交易间隔状态" :span="2">
+                    <el-tag :type="getTradeIntervalStatus().includes('可立即') ? 'success' : 'warning'">
+                      {{ getTradeIntervalStatus() }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="交易对">{{ store.tradingStatus.symbol || '无' }}</el-descriptions-item>
+                  <el-descriptions-item label="状态">{{ getStateText(store.tradingStatus.state) }}</el-descriptions-item>
+                  <el-descriptions-item label="更新时间">
+                    {{ new Date(store.tradingStatus.lastUpdateTime).toLocaleString() }}
+                  </el-descriptions-item>
+                  <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单价格">
+                    {{ store.tradingStatus.buyOrder.price }}
+                    <div style="font-size: 12px; color: #909399;">
+                      ({{ getCurrentPrice(store.tradingStatus.symbol || '') }})
+                    </div>
+                  </el-descriptions-item>
+                  <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单数量">
+                    {{ store.tradingStatus.buyOrder.amount }}
+                  </el-descriptions-item>
+                  <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单状态">
+                    <el-tag :type="store.tradingStatus.buyOrder.status === 'closed' ? 'success' : store.tradingStatus.buyOrder.status === 'canceled' ? 'danger' : 'warning'" style="margin-right: 10px;">
+                      {{ store.tradingStatus.buyOrder.status === 'closed' ? '已成交' : store.tradingStatus.buyOrder.status === 'canceled' ? '已取消' : '进行中' }}
+                    </el-tag>
+                    <el-button
+                      v-if="store.tradingStatus.state === 'BUY_ORDER_PLACED' && store.tradingStatus.buyOrder"
+                      type="primary" 
+                      size="small"
+                      @click="handleMarketBuyFromStatus"
+                      :loading="marketBuying"
+                    >
+                      市价买入
+                    </el-button>
+                  </el-descriptions-item>
+                  <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单价格">
+                    {{ store.tradingStatus.sellOrder.price }} (<span :class="unrealizedProfit >= 0 ? 'text-success' : 'text-danger'"> {{ unrealizedProfit >= 0 ? '+' : '' }}{{ unrealizedProfit.toFixed(2) }} U </span>)
+                    <div style="font-size: 12px; color: #909399;">
+                      ({{ unrealizedProfitRate >= 0 ? '+' : '' }}{{ unrealizedProfitRate.toFixed(2) }}%)
+                    </div>
+                  </el-descriptions-item>
+                  <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单数量">
+                    {{ store.tradingStatus.sellOrder.amount }}
+                  </el-descriptions-item>
+                  <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单状态">
+                    <el-tag :type="store.tradingStatus.sellOrder.status === 'closed' ? 'success' : store.tradingStatus.sellOrder.status === 'canceled' ? 'danger' : 'warning'" style="margin-right: 10px;">
+                      {{ store.tradingStatus.sellOrder.status === 'closed' ? '已成交' : store.tradingStatus.sellOrder.status === 'canceled' ? '已取消' : '进行中' }}
+                    </el-tag>
+                    <el-button
+                      v-if="store.tradingStatus.buyOrder && (store.tradingStatus.state === 'BOUGHT' || store.tradingStatus.state === 'SELL_ORDER_PLACED')"
+                      type="danger"
+                      size="small"
+                      :loading="marketSelling"
+                      @click="handleMarketSellFromStatus"
+                    >
+                      市价卖出
+                    </el-button>
+                  </el-descriptions-item>
+                </el-descriptions>
               </div>
             </el-card>
           </el-col>
-          <el-col :xs="12" :sm="12" :md="6">
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-item">
-                <div class="stat-label">年化收益率</div>
-                <div class="stat-value" :class="store.stats.annualizedReturn >= 0 ? 'success' : 'danger'">
-                  {{ store.stats.annualizedReturn >= 0 ? '+' : '' }}{{ store.stats.annualizedReturn.toFixed(2) }}%
+
+          <el-col :xs="24" :sm="24" :md="16" :lg="16">
+            <!-- 振幅分析 -->
+            <el-card shadow="hover" class="analysis-card">
+              <template #header>
+                <div class="card-header">
+                  <span>实时振幅分析</span>
+                  <div>
+                    <el-button type="primary" size="small" @click="refreshAnalysis" :loading="loading">
+                      刷新分析
+                    </el-button>
+                  </div>
+                </div>
+              </template>
+              <el-table :data="store.amplitudeAnalyses" stripe style="width: 100%">
+                <el-table-column prop="symbol" label="交易对" width="100" fixed />
+                
+                <el-table-column label="当前价格">
+                  <template #default="{ row }">
+                    <span style="font-weight: bold; color: #409eff;">
+                      {{ getCurrentPrice(row.symbol) }}
+                    </span>
+                  </template>
+                </el-table-column>
+                
+                <!-- 如果启用多时间框架，显示多时间框架趋势 -->
+                <el-table-column v-if="store.config.multiTimeframe?.enabled" label="多时间框架分析" width="280">
+                  <template #default="{ row }">
+                    <div v-if="row.timeframes" style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+                      <div style="display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #909399; width: 38px; font-weight: bold;">15m:</span>
+                        <div style="flex: 1; display: flex; gap: 2px;">
+                          <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="color: #606266; font-size: 10px;">振幅:</span>
+                            <el-tag :type="getAmplitudeType(row.timeframes['15m']?.amplitude)" size="small">
+                              {{ formatAmplitude(row.timeframes['15m']?.amplitude) }}
+                            </el-tag>
+                          </div>
+                          <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="color: #606266; font-size: 10px;">趋势:</span>
+                            <el-tag :type="getTrendType(row.timeframes['15m']?.trend)" size="small">
+                              {{ formatTrend(row.timeframes['15m']?.trend) }}
+                            </el-tag>
+                          </div>
+                        </div>
+                        <span v-if="isTimeframePassed(row.timeframes['15m'])" style="color: #67c23a; font-size: 14px;">✓</span>
+                        <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #909399; width: 38px; font-weight: bold;">1h:</span>
+                        <div style="flex: 1; display: flex; gap: 2px;">
+                          <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="color: #606266; font-size: 10px;">振幅:</span>
+                            <el-tag :type="getAmplitudeType(row.timeframes['1h']?.amplitude)" size="small">
+                              {{ formatAmplitude(row.timeframes['1h']?.amplitude) }}
+                            </el-tag>
+                          </div>
+                          <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="color: #606266; font-size: 10px;">趋势:</span>
+                            <el-tag :type="getTrendType(row.timeframes['1h']?.trend)" size="small">
+                              {{ formatTrend(row.timeframes['1h']?.trend) }}
+                            </el-tag>
+                          </div>
+                        </div>
+                        <span v-if="isTimeframePassed(row.timeframes['1h'])" style="color: #67c23a; font-size: 14px;">✓</span>
+                        <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 5px;">
+                        <span style="color: #909399; width: 38px; font-weight: bold;">4h:</span>
+                        <div style="flex: 1; display: flex; gap: 2px;">
+                          <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="color: #606266; font-size: 10px;">振幅:</span>
+                            <el-tag :type="getAmplitudeType(row.timeframes['4h']?.amplitude)" size="small">
+                              {{ formatAmplitude(row.timeframes['4h']?.amplitude) }}
+                            </el-tag>
+                          </div>
+                          <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="color: #606266; font-size: 10px;">趋势:</span>
+                            <el-tag :type="getTrendType(row.timeframes['4h']?.trend)" size="small">
+                              {{ formatTrend(row.timeframes['4h']?.trend) }}
+                            </el-tag>
+                          </div>
+                        </div>
+                        <span v-if="isTimeframePassed(row.timeframes['4h'])" style="color: #67c23a; font-size: 14px;">✓</span>
+                        <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
+                      </div>
+                    </div>
+                    <span v-else style="color: #909399;">-</span>
+                  </template>
+                </el-table-column>
+                
+                <!-- 如果启用多时间框架，显示评分 -->
+                <el-table-column v-if="store.config.multiTimeframe?.enabled" label="评分" width="150" >
+                  <template #default="{ row }">
+                    <div v-if="row.score !== undefined">
+                      <el-progress 
+                        :percentage="row.score" 
+                        :color="getScoreColor(row.score)"
+                        :stroke-width="16"
+                      >
+                        <span style="font-size: 12px; font-weight: bold;">
+                          {{ row.score }}
+                        </span>
+                      </el-progress>
+                    </div>
+                    <span v-else style="color: #909399;">-</span>
+                  </template>
+                </el-table-column>
+                
+                <!-- 如果启用多时间框架，显示确认状态 -->
+                <el-table-column v-if="store.config.multiTimeframe?.enabled" label="确认状态" width="120">
+                  <template #default="{ row }">
+                    <el-tooltip
+                      v-if="row.isValid !== undefined"
+                      :content="getConfirmationStatus(row).tooltip"
+                      placement="top"
+                    >
+                      <el-tag 
+                        :type="getConfirmationStatus(row).type" 
+                        size="small"
+                      >
+                        {{ getConfirmationStatus(row).text }}
+                      </el-tag>
+                    </el-tooltip>
+                    <span v-else style="color: #909399;">-</span>
+                  </template>
+                </el-table-column>
+                
+                <!-- 单时间框架时显示 -->
+                <el-table-column v-if="!store.config.multiTimeframe?.enabled" label="振幅">
+                  <template #default="{ row }">
+                    <el-tag :type="row.amplitude >= store.config.amplitudeThreshold ? 'success' : 'info'" size="small">
+                      {{ row.amplitude }}%
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                
+                <el-table-column v-if="!store.config.multiTimeframe?.enabled" label="趋势" >
+                  <template #default="{ row }">
+                    <el-tag :type="row.trend > 0 ? 'success' : row.trend < 0 ? 'danger' : 'info'" size="small">
+                      {{ row.trend > 0 ? '+' : '' }}{{ row.trend }}%
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                
+                <el-table-column v-if="!store.config.multiTimeframe?.enabled" label="趋势过滤" width="90">
+                  <template #default="{ row }">
+                    <el-tag :type="row.isTrendFiltered ? 'warning' : 'success'" size="small">
+                      {{ row.isTrendFiltered ? '已过滤' : '正常' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                
+                <!-- 最高价 - 兼容多时间框架 -->
+                <el-table-column label="最高价">
+                  <template #default="{ row }">
+                    {{ row.timeframes ? row.timeframes['15m'].high : row.high }}
+                  </template>
+                </el-table-column>
+
+                <!-- 最低价 - 兼容多时间框架 -->
+                <el-table-column label="最低价">
+                  <template #default="{ row }">
+                    {{ row.timeframes ? row.timeframes['15m'].low : row.low }}
+                  </template>
+                </el-table-column>
+
+                <!-- 建议买入价 - 兼容多时间框架 -->
+                <el-table-column label="建议买入价">
+                  <template #default="{ row }">
+                    {{ row.timeframes ? row.timeframes['15m'].buyPrice : row.buyPrice }}
+                  </template>
+                </el-table-column>
+
+                <!-- 建议卖出价 - 兼容多时间框架 -->
+                <el-table-column label="建议卖出价">
+                  <template #default="{ row }">
+                    {{ row.timeframes ? row.timeframes['15m'].sellPrice : row.sellPrice }}
+                  </template>
+                </el-table-column>
+
+                
+                <el-table-column label="今日交易" width="80">
+                  <template #default="{ row }">
+                    <el-tag :type="(store.stats.tradedSymbols[row.symbol] ?? 0) > 0 ? 'info' : 'success'" size="small">
+                      {{ store.stats.tradedSymbols[row.symbol] ?? 0 }}次
+                    </el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-card>
+
+            <!-- AI分析结果 -->
+            <el-card shadow="hover" class="ai-analysis-card">
+              <template #header>
+                <div class="card-header">
+                  <span>🤖 AI智能分析</span>
+                  <div>
+                    <el-select v-model="selectedAISymbol" placeholder="选择交易对" size="small" style="width: 120px;">
+                      <el-option v-for="symbol in store.config.symbols" :key="symbol" :label="symbol" :value="symbol" />
+                    </el-select>
+                    <el-button type="success" size="small" @click="testAIAnalysis" :loading="testingAI">
+                      执行AI分析
+                    </el-button>
+                  </div>
+                </div>
+              </template>
+              
+              <!-- AI分析结果展示 -->
+              <div v-if="aiAnalysisResult && aiAnalysisResult.analysis" class="ai-analysis-result">
+                <el-descriptions :column="2" border>
+                  <el-descriptions-item label="交易对">{{ aiAnalysisResult.analysis.symbol }}</el-descriptions-item>
+                  <el-descriptions-item label="分析时间">
+                    {{ new Date(aiAnalysisResult.analysis.timestamp).toLocaleString() }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="缓存状态">
+                    <el-tag :type="aiAnalysisResult.fromCache ? 'info' : 'success'" size="default">
+                      {{ aiAnalysisResult.fromCache ? '🔄 来自缓存' : '⚡ 实时分析' }}
+                    </el-tag>
+                    <div v-if="aiAnalysisResult.fromCache && aiAnalysisResult.cacheExpiresAt" style="font-size: 12px; color: #909399; margin-top: 4px;">
+                      缓存有效期至: {{ new Date(aiAnalysisResult.cacheExpiresAt).toLocaleTimeString() }}
+                    </div>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="交易建议">
+                    <el-tag :type="getRecommendationType(aiAnalysisResult.analysis.recommendation)" size="large">
+                      {{ getRecommendationText(aiAnalysisResult.analysis.recommendation) }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="置信度">
+                    <el-progress
+                      :stroke-width="20"
+                      :percentage="aiAnalysisResult.analysis.confidence" 
+                      :color="getConfidenceColor(aiAnalysisResult.analysis.confidence)"
+                      :show-text="true"
+                      style="width: 120px;"
+                    />
+                  </el-descriptions-item>
+                  <el-descriptions-item label="风险等级">
+                    <el-tag :type="getRiskLevelType(aiAnalysisResult.analysis.riskLevel)" size="default">
+                      {{ aiAnalysisResult.analysis.riskLevel }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="技术指标">
+                    <div v-if="aiAnalysisResult.analysis.confidenceDetails?.technicalData" class="technical-indicators">
+                      <div class="indicator-label">支撑位：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.support.toFixed(2) }}</div>
+                      <div class="indicator-label">阻力位：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.resistance.toFixed(2) }}</div>
+                      <!-- 移动平均线 -->
+                      <div class="indicator-label">MA15m：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.ma7.toFixed(2) }}/
+                        {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.ma25.toFixed(2) }}
+                        <el-tag :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.trend === 'BULLISH' ? 'success' : 'danger'" size="small">
+                          {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.trend === 'BULLISH' ? '🐂' : '🐻' }}
+                        </el-tag>
+                      </div>
+                      <div class="indicator-label">MA1h<：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.ma7.toFixed(2) }}/
+                        {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.ma25.toFixed(2) }}
+                        <el-tag :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.trend === 'BULLISH' ? 'success' : 'danger'" size="small">
+                          {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.trend === 'BULLISH' ? '🐂' : '🐻' }}
+                        </el-tag>
+                      </div>
+                      <!-- RSI指标 -->
+                      <div class="indicator-label">RSI15m：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['15m']?.toFixed(2) }}
+                        <el-tag 
+                          :type="getRSIType(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['15m'])" 
+                          size="small"
+                        >
+                          {{ getRSIStatusText(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['15m']) }}
+                        </el-tag>
+                      </div>
+                      <div class="indicator-label">RSI1h：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['1h']?.toFixed(2) }}
+                        <el-tag 
+                          :type="getRSIType(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['1h'])" 
+                          size="small"
+                        >
+                          {{ getRSIStatusText(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['1h']) }}
+                        </el-tag>
+                      </div>
+                      <!-- 成交量 -->
+                      <div class="indicator-label">成交量15m：{{ formatVolume(aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.current) }}
+                        <el-tag 
+                          :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.trend === 'INCREASING' ? 'success' : aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.trend === 'DECREASING' ? 'danger' : 'info'" 
+                          size="small"
+                        >
+                          {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.changePercent >= 0 ? '+' : '' }}{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.changePercent?.toFixed(1) }}%
+                        </el-tag>
+                      </div>
+                      <!-- 价格变化 -->
+                      <div class="indicator-label">24h变化：<el-tag 
+                          :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.priceChanges?.['24h'] >= 0 ? 'success' : 'danger'" 
+                          size="small"
+                        >
+                          {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.priceChanges?.['24h'] >= 0 ? '+' : '' }}{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.priceChanges?.['24h']?.toFixed(2) }}%
+                        </el-tag>
+                      </div>
+                    </div>
+                    <div v-else class="no-technical-data">
+                      <el-tag type="info" size="default">暂无技术指标数据</el-tag>
+                    </div>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="市场情绪">
+                    <el-tag :type="getSentimentType(aiAnalysisResult.analysis.marketSentiment)" size="default">
+                      {{ aiAnalysisResult.analysis.marketSentiment }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="分析理由" :span="2">
+                    <div class="ai-reasoning">{{ aiAnalysisResult.analysis.reasoning }}</div>
+                  </el-descriptions-item>
+                </el-descriptions>
+              </div>
+              
+              <div v-else class="ai-analysis-empty">
+                <el-empty description="点击'执行AI分析'按钮开始分析" />
+              </div>
+            </el-card>
+
+            <!-- 交易记录 -->
+            <el-card shadow="hover" class="records-card">
+              <template #header>
+                <div class="card-header">
+                  <span>交易记录（全部）</span>
+                </div>
+              </template>
+              <el-table :data="sortedTradeRecords" stripe style="width: 100%">
+                <el-table-column prop="symbol" label="交易对" width="120" />
+                <el-table-column label="买入价" width="120">
+                  <template #default="{ row }">
+                    {{ row.buyPrice?.toFixed(2) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="卖出价">
+                  <template #default="{ row }">
+                    {{ row.sellPrice?.toFixed(2) || '-' }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="数量">
+                  <template #default="{ row }">
+                    {{ row.amount?.toFixed(5) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="收益(USDT)">
+                  <template #default="{ row }">
+                    <span :class="row.profit >= 0 ? 'text-success' : 'text-danger'">
+                      {{ row.profit ? (row.profit >= 0 ? '+' : '') + row.profit.toFixed(2) : '-' }}
+                    </span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="收益率">
+                  <template #default="{ row }">
+                    <span :class="row.profitRate >= 0 ? 'text-success' : 'text-danger'">
+                      {{ row.profitRate ? (row.profitRate >= 0 ? '+' : '') + row.profitRate.toFixed(2) + '%' : '-' }}
+                    </span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="状态">
+                  <template #default="{ row }">
+                    <el-tooltip
+                      v-if="row.status === 'failed' && row.failureReason"
+                      :content="row.failureReason"
+                      placement="top"
+                    >
+                      <el-tag type="danger">
+                        失败
+                      </el-tag>
+                    </el-tooltip>
+
+                    <el-tag
+                      v-else
+                      :type="row.status === 'completed'
+                        ? 'success'
+                        : row.status === 'failed'
+                          ? 'danger'
+                          : 'warning'"
+                    >
+                      {{
+                        row.status === 'completed'
+                          ? '已完成'
+                          : row.status === 'failed'
+                            ? '失败'
+                            : '进行中'
+                      }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="开始时间" width="180">
+                  <template #default="{ row }">
+                    {{ new Date(row.startTime).toLocaleString() }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="结束时间" width="180">
+                  <template #default="{ row }">
+                    {{ row.endTime ? new Date(row.endTime).toLocaleString() : '-' }}
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-card>
+
+            <!-- 调试日志 -->
+            <el-card shadow="hover" class="debug-log-card">
+              <template #header>
+                <div class="card-header">
+                  <span>调试日志</span>
+                  <el-button type="danger" size="small" @click="store.clearDebugLogs()">
+                    清空日志
+                  </el-button>
+                </div>
+              </template>
+              <div class="debug-logs">
+                <div v-if="store.debugLogs.length === 0" class="empty-logs">
+                  <el-empty description="暂无日志" />
+                </div>
+                <div v-else class="log-list">
+                  <div v-for="(log, index) in store.debugLogs" :key="index" class="log-item">
+                    {{ log }}
+                  </div>
                 </div>
               </div>
             </el-card>
           </el-col>
         </el-row>
-
-        <!-- 熔断器状态 -->
-        <el-card shadow="hover" class="status-card">
-          <template #header>
-            <div class="card-header">
-              <span>熔断器状态</span>
-              <div>
-                <el-tag 
-                  :type="store.circuitBreakerState.isTripped ? 'danger' : 'success'" 
-                  size="large"
-                >
-                  {{ store.circuitBreakerState.isTripped ? '🔒 已熔断' : '✅ 正常' }}
-                </el-tag>
-                <el-button 
-                  v-if="store.circuitBreakerState.isTripped"
-                  type="warning" 
-                  size="small" 
-                  @click="handleResetCircuitBreaker"
-                  :loading="resettingCircuitBreaker"
-                >
-                  重置熔断器
-                </el-button>
-              </div>
-            </div>
-          </template>
-          <el-descriptions :column="3" border>
-            <el-descriptions-item label="连续失败次数">
-              <el-tag :type="store.circuitBreakerState.consecutiveFailures > 0 ? 'warning' : 'success'">
-                {{ store.circuitBreakerState.consecutiveFailures }}
-              </el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item label="当日亏损(USDT)">
-              <span :class="store.circuitBreakerState.dailyLoss < 0 ? 'text-danger' : 'text-success'">
-                {{ store.circuitBreakerState.dailyLoss.toFixed(2) }}
-              </span>
-            </el-descriptions-item>
-            <el-descriptions-item label="熔断限额">
-              连续失败: {{ store.config.circuitBreaker.consecutiveFailures }}次<br/>
-              日亏损: {{ store.config.circuitBreaker.dailyLossLimit }} USDT
-            </el-descriptions-item>
-            <el-descriptions-item v-if="store.circuitBreakerState.isTripped && store.circuitBreakerState.trippedAt" label="熔断时间" :span="2">
-              {{ new Date(store.circuitBreakerState.trippedAt).toLocaleString() }}
-            </el-descriptions-item>
-            <el-descriptions-item v-if="store.circuitBreakerState.reason" label="熔断原因" :span="3">
-              <el-tag type="danger">{{ store.circuitBreakerState.reason }}</el-tag>
-            </el-descriptions-item>
-          </el-descriptions>
-        </el-card>
-
-        <!-- 交易状态 -->
-        <el-card shadow="hover" class="status-card">
-          <template #header>
-            <div class="card-header">
-              <span>交易状态（全部）</span>
-              <el-tag :type="getStateType(store.tradingStatus.state)" size="large">
-                {{ getStateText(store.tradingStatus.state) }}
-              </el-tag>
-            </div>
-          </template>
-          <div class="status-content">
-            <el-descriptions :column="3" border>
-              <el-descriptions-item label="今日交易">
-                <el-tag :type="getTodayCompletedTrades() >= store.config.dailyTradeLimit && store.config.dailyTradeLimit > 0 ? 'danger' : 'success'">
-                  {{ getTodayCompletedTrades() }}/{{ store.config.dailyTradeLimit || '无限制' }}
-                </el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="交易间隔状态" :span="2">
-                <el-tag :type="getTradeIntervalStatus().includes('可立即') ? 'success' : 'warning'">
-                  {{ getTradeIntervalStatus() }}
-                </el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="交易对">{{ store.tradingStatus.symbol || '无' }}</el-descriptions-item>
-              <el-descriptions-item label="状态">{{ getStateText(store.tradingStatus.state) }}</el-descriptions-item>
-              <el-descriptions-item label="更新时间">
-                {{ new Date(store.tradingStatus.lastUpdateTime).toLocaleString() }}
-              </el-descriptions-item>
-              <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单价格">
-                {{ store.tradingStatus.buyOrder.price }}
-                <div style="font-size: 12px; color: #909399;">
-                  ({{ getCurrentPrice(store.tradingStatus.symbol || '') }})
-                </div>
-              </el-descriptions-item>
-              <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单数量">
-                {{ store.tradingStatus.buyOrder.amount }}
-              </el-descriptions-item>
-              <el-descriptions-item v-if="store.tradingStatus.buyOrder" label="买单状态">
-                <el-tag :type="store.tradingStatus.buyOrder.status === 'closed' ? 'success' : store.tradingStatus.buyOrder.status === 'canceled' ? 'danger' : 'warning'" style="margin-right: 10px;">
-                  {{ store.tradingStatus.buyOrder.status === 'closed' ? '已成交' : store.tradingStatus.buyOrder.status === 'canceled' ? '已取消' : '进行中' }}
-                </el-tag>
-                <el-button
-                  v-if="store.tradingStatus.state === 'BUY_ORDER_PLACED' && store.tradingStatus.buyOrder"
-                  type="primary" 
-                  size="small"
-                  @click="handleMarketBuyFromStatus"
-                  :loading="marketBuying"
-                >
-                  市价买入
-                </el-button>
-              </el-descriptions-item>
-              <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单价格">
-                {{ store.tradingStatus.sellOrder.price }} (<span :class="unrealizedProfit >= 0 ? 'text-success' : 'text-danger'"> {{ unrealizedProfit >= 0 ? '+' : '' }}{{ unrealizedProfit.toFixed(2) }} U </span>)
-                <div style="font-size: 12px; color: #909399;">
-                  ({{ unrealizedProfitRate >= 0 ? '+' : '' }}{{ unrealizedProfitRate.toFixed(2) }}%)
-                </div>
-              </el-descriptions-item>
-              <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单数量">
-                {{ store.tradingStatus.sellOrder.amount }}
-              </el-descriptions-item>
-              <el-descriptions-item v-if="store.tradingStatus.sellOrder" label="卖单状态">
-                <el-tag :type="store.tradingStatus.sellOrder.status === 'closed' ? 'success' : store.tradingStatus.sellOrder.status === 'canceled' ? 'danger' : 'warning'" style="margin-right: 10px;">
-                  {{ store.tradingStatus.sellOrder.status === 'closed' ? '已成交' : store.tradingStatus.sellOrder.status === 'canceled' ? '已取消' : '进行中' }}
-                </el-tag>
-                <el-button
-                  v-if="store.tradingStatus.buyOrder && (store.tradingStatus.state === 'BOUGHT' || store.tradingStatus.state === 'SELL_ORDER_PLACED')"
-                  type="danger"
-                  size="small"
-                  :loading="marketSelling"
-                  @click="handleMarketSellFromStatus"
-                >
-                  市价卖出
-                </el-button>
-              </el-descriptions-item>
-            </el-descriptions>
-          </div>
-        </el-card>
-
-        <!-- 振幅分析 -->
-        <el-card shadow="hover" class="analysis-card">
-          <template #header>
-            <div class="card-header">
-              <span>实时振幅分析</span>
-              <div>
-                <el-button type="primary" size="small" @click="refreshAnalysis" :loading="loading">
-                  刷新分析
-                </el-button>
-              </div>
-            </div>
-          </template>
-          <el-table :data="store.amplitudeAnalyses" stripe style="width: 100%">
-            <el-table-column prop="symbol" label="交易对" width="100" fixed />
-            
-            <el-table-column label="当前价格">
-              <template #default="{ row }">
-                <span style="font-weight: bold; color: #409eff;">
-                  {{ getCurrentPrice(row.symbol) }}
-                </span>
-              </template>
-            </el-table-column>
-            
-            <!-- 如果启用多时间框架，显示多时间框架趋势 -->
-            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="多时间框架分析" width="280">
-              <template #default="{ row }">
-                <div v-if="row.timeframes" style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-                  <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="color: #909399; width: 38px; font-weight: bold;">15m:</span>
-                    <div style="flex: 1; display: flex; gap: 2px;">
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: #606266; font-size: 10px;">振幅:</span>
-                        <el-tag :type="getAmplitudeType(row.timeframes['15m']?.amplitude)" size="small">
-                          {{ formatAmplitude(row.timeframes['15m']?.amplitude) }}
-                        </el-tag>
-                      </div>
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: #606266; font-size: 10px;">趋势:</span>
-                        <el-tag :type="getTrendType(row.timeframes['15m']?.trend)" size="small">
-                          {{ formatTrend(row.timeframes['15m']?.trend) }}
-                        </el-tag>
-                      </div>
-                    </div>
-                    <span v-if="isTimeframePassed(row.timeframes['15m'])" style="color: #67c23a; font-size: 14px;">✓</span>
-                    <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="color: #909399; width: 38px; font-weight: bold;">1h:</span>
-                    <div style="flex: 1; display: flex; gap: 2px;">
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: #606266; font-size: 10px;">振幅:</span>
-                        <el-tag :type="getAmplitudeType(row.timeframes['1h']?.amplitude)" size="small">
-                          {{ formatAmplitude(row.timeframes['1h']?.amplitude) }}
-                        </el-tag>
-                      </div>
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: #606266; font-size: 10px;">趋势:</span>
-                        <el-tag :type="getTrendType(row.timeframes['1h']?.trend)" size="small">
-                          {{ formatTrend(row.timeframes['1h']?.trend) }}
-                        </el-tag>
-                      </div>
-                    </div>
-                    <span v-if="isTimeframePassed(row.timeframes['1h'])" style="color: #67c23a; font-size: 14px;">✓</span>
-                    <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="color: #909399; width: 38px; font-weight: bold;">4h:</span>
-                    <div style="flex: 1; display: flex; gap: 2px;">
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: #606266; font-size: 10px;">振幅:</span>
-                        <el-tag :type="getAmplitudeType(row.timeframes['4h']?.amplitude)" size="small">
-                          {{ formatAmplitude(row.timeframes['4h']?.amplitude) }}
-                        </el-tag>
-                      </div>
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: #606266; font-size: 10px;">趋势:</span>
-                        <el-tag :type="getTrendType(row.timeframes['4h']?.trend)" size="small">
-                          {{ formatTrend(row.timeframes['4h']?.trend) }}
-                        </el-tag>
-                      </div>
-                    </div>
-                    <span v-if="isTimeframePassed(row.timeframes['4h'])" style="color: #67c23a; font-size: 14px;">✓</span>
-                    <span v-else style="color: #f56c6c; font-size: 14px;">✗</span>
-                  </div>
-                </div>
-                <span v-else style="color: #909399;">-</span>
-              </template>
-            </el-table-column>
-            
-            <!-- 如果启用多时间框架，显示评分 -->
-            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="评分" width="150" >
-              <template #default="{ row }">
-                <div v-if="row.score !== undefined">
-                  <el-progress 
-                    :percentage="row.score" 
-                    :color="getScoreColor(row.score)"
-                    :stroke-width="16"
-                  >
-                    <span style="font-size: 12px; font-weight: bold;">
-                      {{ row.score }}
-                    </span>
-                  </el-progress>
-                </div>
-                <span v-else style="color: #909399;">-</span>
-              </template>
-            </el-table-column>
-            
-            <!-- 如果启用多时间框架，显示确认状态 -->
-            <el-table-column v-if="store.config.multiTimeframe?.enabled" label="确认状态" width="150">
-              <template #default="{ row }">
-                <el-tooltip
-                  v-if="row.isValid !== undefined"
-                  :content="getConfirmationStatus(row).tooltip"
-                  placement="top"
-                >
-                  <el-tag 
-                    :type="getConfirmationStatus(row).type" 
-                    size="small"
-                  >
-                    {{ getConfirmationStatus(row).text }}
-                  </el-tag>
-                </el-tooltip>
-                <span v-else style="color: #909399;">-</span>
-              </template>
-            </el-table-column>
-            
-            <!-- 单时间框架时显示 -->
-            <el-table-column v-if="!store.config.multiTimeframe?.enabled" label="振幅">
-              <template #default="{ row }">
-                <el-tag :type="row.amplitude >= store.config.amplitudeThreshold ? 'success' : 'info'" size="small">
-                  {{ row.amplitude }}%
-                </el-tag>
-              </template>
-            </el-table-column>
-            
-            <el-table-column v-if="!store.config.multiTimeframe?.enabled" label="趋势" >
-              <template #default="{ row }">
-                <el-tag :type="row.trend > 0 ? 'success' : row.trend < 0 ? 'danger' : 'info'" size="small">
-                  {{ row.trend > 0 ? '+' : '' }}{{ row.trend }}%
-                </el-tag>
-              </template>
-            </el-table-column>
-            
-            <el-table-column v-if="!store.config.multiTimeframe?.enabled" label="趋势过滤" width="90">
-              <template #default="{ row }">
-                <el-tag :type="row.isTrendFiltered ? 'warning' : 'success'" size="small">
-                  {{ row.isTrendFiltered ? '已过滤' : '正常' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            
-            <!-- 最高价 - 兼容多时间框架 -->
-            <el-table-column label="最高价">
-              <template #default="{ row }">
-                {{ row.timeframes ? row.timeframes['15m'].high : row.high }}
-              </template>
-            </el-table-column>
-
-            <!-- 最低价 - 兼容多时间框架 -->
-            <el-table-column label="最低价">
-              <template #default="{ row }">
-                {{ row.timeframes ? row.timeframes['15m'].low : row.low }}
-              </template>
-            </el-table-column>
-
-            <!-- 建议买入价 - 兼容多时间框架 -->
-            <el-table-column label="建议买入价">
-              <template #default="{ row }">
-                {{ row.timeframes ? row.timeframes['15m'].buyPrice : row.buyPrice }}
-              </template>
-            </el-table-column>
-
-            <!-- 建议卖出价 - 兼容多时间框架 -->
-            <el-table-column label="建议卖出价">
-              <template #default="{ row }">
-                {{ row.timeframes ? row.timeframes['15m'].sellPrice : row.sellPrice }}
-              </template>
-            </el-table-column>
-
-            
-            <el-table-column label="今日交易" width="80">
-              <template #default="{ row }">
-                <el-tag :type="(store.stats.tradedSymbols[row.symbol] ?? 0) > 0 ? 'info' : 'success'" size="small">
-                  {{ store.stats.tradedSymbols[row.symbol] ?? 0 }}次
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-
-        <!-- AI分析结果 -->
-        <el-card shadow="hover" class="ai-analysis-card">
-          <template #header>
-            <div class="card-header">
-              <span>🤖 AI智能分析</span>
-              <div>
-                <el-select v-model="selectedAISymbol" placeholder="选择交易对" size="small" style="width: 120px;">
-                  <el-option v-for="symbol in store.config.symbols" :key="symbol" :label="symbol" :value="symbol" />
-                </el-select>
-                <el-button type="success" size="small" @click="testAIAnalysis" :loading="testingAI">
-                  执行AI分析
-                </el-button>
-              </div>
-            </div>
-          </template>
-          
-          <!-- AI分析结果展示 -->
-          <div v-if="aiAnalysisResult && aiAnalysisResult.analysis" class="ai-analysis-result">
-            <el-descriptions :column="2" border>
-              <el-descriptions-item label="交易对">{{ aiAnalysisResult.analysis.symbol }}</el-descriptions-item>
-              <el-descriptions-item label="分析时间">
-                {{ new Date(aiAnalysisResult.analysis.timestamp).toLocaleString() }}
-              </el-descriptions-item>
-              <el-descriptions-item label="缓存状态">
-                <el-tag :type="aiAnalysisResult.fromCache ? 'info' : 'success'" size="default">
-                  {{ aiAnalysisResult.fromCache ? '🔄 来自缓存' : '⚡ 实时分析' }}
-                </el-tag>
-                <div v-if="aiAnalysisResult.fromCache && aiAnalysisResult.cacheExpiresAt" style="font-size: 12px; color: #909399; margin-top: 4px;">
-                  缓存有效期至: {{ new Date(aiAnalysisResult.cacheExpiresAt).toLocaleTimeString() }}
-                </div>
-              </el-descriptions-item>
-              <el-descriptions-item label="交易建议">
-                <el-tag :type="getRecommendationType(aiAnalysisResult.analysis.recommendation)" size="large">
-                  {{ getRecommendationText(aiAnalysisResult.analysis.recommendation) }}
-                </el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="置信度">
-                <el-progress
-                  :stroke-width="20"
-                  :percentage="aiAnalysisResult.analysis.confidence" 
-                  :color="getConfidenceColor(aiAnalysisResult.analysis.confidence)"
-                  :show-text="true"
-                  style="width: 120px;"
-                />
-              </el-descriptions-item>
-              <el-descriptions-item label="风险等级">
-                <el-tag :type="getRiskLevelType(aiAnalysisResult.analysis.riskLevel)" size="default">
-                  {{ aiAnalysisResult.analysis.riskLevel }}
-                </el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="技术指标">
-                <div v-if="aiAnalysisResult.analysis.confidenceDetails?.technicalData" class="technical-indicators">
-                  <div class="indicator-label">支撑位：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.support.toFixed(2) }}</div>
-                  <div class="indicator-label">阻力位：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.resistance.toFixed(2) }}</div>
-                  <!-- 移动平均线 -->
-                  <div class="indicator-label">MA15m：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.ma7.toFixed(2) }}/
-                    {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.ma25.toFixed(2) }}
-                    <el-tag :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.trend === 'BULLISH' ? 'success' : 'danger'" size="small">
-                      {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['15m']?.trend === 'BULLISH' ? '🐂' : '🐻' }}
-                    </el-tag>
-                  </div>
-                  <div class="indicator-label">MA1h<：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.ma7.toFixed(2) }}/
-                    {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.ma25.toFixed(2) }}
-                    <el-tag :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.trend === 'BULLISH' ? 'success' : 'danger'" size="small">
-                      {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.movingAverages?.['1h']?.trend === 'BULLISH' ? '🐂' : '🐻' }}
-                    </el-tag>
-                  </div>
-                  <!-- RSI指标 -->
-                  <div class="indicator-label">RSI15m：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['15m']?.toFixed(2) }}
-                    <el-tag 
-                      :type="getRSIType(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['15m'])" 
-                      size="small"
-                    >
-                      {{ getRSIStatusText(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['15m']) }}
-                    </el-tag>
-                  </div>
-                  <div class="indicator-label">RSI1h：{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['1h']?.toFixed(2) }}
-                    <el-tag 
-                      :type="getRSIType(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['1h'])" 
-                      size="small"
-                    >
-                      {{ getRSIStatusText(aiAnalysisResult.analysis.confidenceDetails.technicalData.rsi?.['1h']) }}
-                    </el-tag>
-                  </div>
-                  <!-- 成交量 -->
-                  <div class="indicator-label">成交量15m：{{ formatVolume(aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.current) }}
-                    <el-tag 
-                      :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.trend === 'INCREASING' ? 'success' : aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.trend === 'DECREASING' ? 'danger' : 'info'" 
-                      size="small"
-                    >
-                      {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.changePercent >= 0 ? '+' : '' }}{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.volume?.['15m']?.changePercent?.toFixed(1) }}%
-                    </el-tag>
-                  </div>
-                  <!-- 价格变化 -->
-                  <div class="indicator-label">24h变化：<el-tag 
-                      :type="aiAnalysisResult.analysis.confidenceDetails.technicalData.priceChanges?.['24h'] >= 0 ? 'success' : 'danger'" 
-                      size="small"
-                    >
-                      {{ aiAnalysisResult.analysis.confidenceDetails.technicalData.priceChanges?.['24h'] >= 0 ? '+' : '' }}{{ aiAnalysisResult.analysis.confidenceDetails.technicalData.priceChanges?.['24h']?.toFixed(2) }}%
-                    </el-tag>
-                  </div>
-                </div>
-                <div v-else class="no-technical-data">
-                  <el-tag type="info" size="default">暂无技术指标数据</el-tag>
-                </div>
-              </el-descriptions-item>
-              <el-descriptions-item label="市场情绪">
-                <el-tag :type="getSentimentType(aiAnalysisResult.analysis.marketSentiment)" size="default">
-                  {{ aiAnalysisResult.analysis.marketSentiment }}
-                </el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="分析理由" :span="2">
-                <div class="ai-reasoning">{{ aiAnalysisResult.analysis.reasoning }}</div>
-              </el-descriptions-item>
-            </el-descriptions>
-          </div>
-          
-          <div v-else class="ai-analysis-empty">
-            <el-empty description="点击'执行AI分析'按钮开始分析" />
-          </div>
-        </el-card>
-
-        <!-- 交易记录 -->
-        <el-card shadow="hover" class="records-card">
-          <template #header>
-            <div class="card-header">
-              <span>交易记录（全部）</span>
-            </div>
-          </template>
-          <el-table :data="sortedTradeRecords" stripe style="width: 100%">
-            <el-table-column prop="symbol" label="交易对" width="120" />
-            <el-table-column label="买入价" width="120">
-              <template #default="{ row }">
-                {{ row.buyPrice?.toFixed(2) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="卖出价">
-              <template #default="{ row }">
-                {{ row.sellPrice?.toFixed(2) || '-' }}
-              </template>
-            </el-table-column>
-            <el-table-column label="数量">
-              <template #default="{ row }">
-                {{ row.amount?.toFixed(5) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="收益(USDT)">
-              <template #default="{ row }">
-                <span :class="row.profit >= 0 ? 'text-success' : 'text-danger'">
-                  {{ row.profit ? (row.profit >= 0 ? '+' : '') + row.profit.toFixed(2) : '-' }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column label="收益率">
-              <template #default="{ row }">
-                <span :class="row.profitRate >= 0 ? 'text-success' : 'text-danger'">
-                  {{ row.profitRate ? (row.profitRate >= 0 ? '+' : '') + row.profitRate.toFixed(2) + '%' : '-' }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column label="状态">
-              <template #default="{ row }">
-                <el-tooltip
-                  v-if="row.status === 'failed' && row.failureReason"
-                  :content="row.failureReason"
-                  placement="top"
-                >
-                  <el-tag type="danger">
-                    失败
-                  </el-tag>
-                </el-tooltip>
-
-                <el-tag
-                  v-else
-                  :type="row.status === 'completed'
-                    ? 'success'
-                    : row.status === 'failed'
-                      ? 'danger'
-                      : 'warning'"
-                >
-                  {{
-                    row.status === 'completed'
-                      ? '已完成'
-                      : row.status === 'failed'
-                        ? '失败'
-                        : '进行中'
-                  }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="开始时间" width="180">
-              <template #default="{ row }">
-                {{ new Date(row.startTime).toLocaleString() }}
-              </template>
-            </el-table-column>
-            <el-table-column label="结束时间" width="180">
-              <template #default="{ row }">
-                {{ row.endTime ? new Date(row.endTime).toLocaleString() : '-' }}
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-
-        <!-- 调试日志 -->
-        <el-card shadow="hover" class="debug-log-card">
-          <template #header>
-            <div class="card-header">
-              <span>调试日志</span>
-              <el-button type="danger" size="small" @click="store.clearDebugLogs()">
-                清空日志
-              </el-button>
-            </div>
-          </template>
-          <div class="debug-logs">
-            <div v-if="store.debugLogs.length === 0" class="empty-logs">
-              <el-empty description="暂无日志" />
-            </div>
-            <div v-else class="log-list">
-              <div v-for="(log, index) in store.debugLogs" :key="index" class="log-item">
-                {{ log }}
-              </div>
-            </div>
-          </div>
-        </el-card>
-
       </el-main>
     </el-container>
   </div>
@@ -1454,6 +1461,7 @@ const handleMarketSellFromStatus = async () => {
   padding: 15px 10px;
   background: #f5f7fa;
   border-radius: 4px;
+  margin-bottom: 10px;
 }
 
 .balance-currency {
