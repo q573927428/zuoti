@@ -9,9 +9,9 @@
       "SOL/USDT",
       "XRP/USDT"
     ],
-    "investmentAmount": 20,
-    "amplitudeThreshold": 1,
-    "trendThreshold": 10,
+    "investmentAmount": 100,
+    "amplitudeThreshold": 2,
+    "trendThreshold": 8,
     "orderTimeout": {
       "default": 7200000,
       "buy": 3600000,
@@ -41,7 +41,7 @@
       "partialFillThreshold": 0.9,
       "balanceSafetyBuffer": 0.05,
       "marketOrderDiscount": 0.999,
-      "priceRangeRatio": 0.2
+      "priceRangeRatio": 0.1
     },
     "multiTimeframe": {
       "enabled": true,
@@ -58,8 +58,8 @@
         "4h": 12
       }
     },
-    "dailyTradeLimit": 3,
-    "tradeInterval": 60000,
+    "dailyTradeLimit": 5,
+    "tradeInterval": 3600000,
     "ai": {
       "enabled": true,
       "analysisInterval": 86400000,
@@ -71,16 +71,14 @@
     }
   },
   "stats": {
-    "totalTrades": 8,
-    "successfulTrades": 5,
-    "failedTrades": 1,
-    "totalProfit": 0.06,
-    "totalProfitRate": 0.06,
-    "annualizedReturn": 10.95,
-    "currentDate": "2026-01-25",
-    "tradedSymbols": {
-      "SOL/USDT": 1
-    }
+    "totalTrades": 40,
+    "successfulTrades": 34,
+    "failedTrades": 3,
+    "totalProfit": -33.18,
+    "totalProfitRate": -0.9758823529411764,
+    "annualizedReturn": -27.399773755656106,
+    "currentDate": "2026-02-06",
+    "tradedSymbols": {}
   },
-  "lastSaved": 1769320702303
+  "lastSaved": 1770307212167
 }
