@@ -732,7 +732,7 @@ export class StateHandlers {
           await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.sellOrder.orderId)
           console.log('✅ 现有卖单已取消')
           // 等待订单取消生效
-          await new Promise(resolve => setTimeout(resolve, 1000))
+          await new Promise(resolve => setTimeout(resolve, 3000))
         } catch (cancelError) {
           console.error('⚠️  取消现有卖单失败，但继续尝试止损:', cancelError)
         }

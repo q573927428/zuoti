@@ -2,23 +2,21 @@ require('dotenv').config()
 const ccxt = require('ccxt')
 
 async function main() {
-  const exchange = new ccxt.binanceusdm({
+  const exchange = new ccxt.binance({
     apiKey: process.env.BINANCE_API_KEY,
     secret: process.env.BINANCE_SECRET,
     enableRateLimit: true,
     options: {
-      defaultType: 'spot',
+      defaultType: 'spot', // 现货
     },
   })
 
+  await exchange.loadMarkets()
+
   const symbol = 'BTC/USDT'
 
-  const openOrders = await exchange.fetchOpenOrders(
-    symbol,
-    undefined,
-    undefined,
-    // { trigger: true } //查询取消条件委托单 需要加上{ trigger: true }
-  )
+  // 查询当前未成交现货订单
+  const openOrders = await exchange.fetchOpenOrders(symbol)
 
   console.log('当前未成交订单数量:', openOrders.length)
 
@@ -28,15 +26,14 @@ async function main() {
       type: o.type,
       side: o.side,
       price: o.price,
-      stopPrice: o.stopPrice,
       status: o.status,
     })
   }
-  const symbolUSDT = 'BTC/USDT'
-  const stopLossOrderId = '56714002432'
-  const stopOrder = await exchange.fetchOrder(stopLossOrderId, symbolUSDT ) //查询取消条件委托单 需要加上{ trigger: true }
-  console.log(stopOrder);
-  
+
+  // 查询单个现货订单
+  const orderId = '56714002432'
+  const order = await exchange.fetchOrder(orderId, symbol)
+  console.log('订单详情:', order)
 }
 
 main().catch(err => {
