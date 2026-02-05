@@ -13,7 +13,7 @@ async function main() {
 
   await exchange.loadMarkets()
 
-  const symbol = 'BTC/USDT'
+  const symbol = 'ETH/USDT'
 
   // 查询当前未成交现货订单
   const openOrders = await exchange.fetchOpenOrders(symbol)
@@ -31,7 +31,7 @@ async function main() {
   }
 
   // 查询单个现货订单
-  const orderId = '56714002432'
+  const orderId = '42955337528'
   const order = await exchange.fetchOrder(orderId, symbol)
   console.log('订单详情:', order)
 }

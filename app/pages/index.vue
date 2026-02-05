@@ -530,7 +530,7 @@
                   <span>交易记录（全部）</span>
                 </div>
               </template>
-              <el-table :data="sortedTradeRecords" stripe style="width: 100%">
+              <el-table :data="sortedTradeRecords" stripe style="width: 100%" max-height="390">
                 <el-table-column prop="symbol" label="交易对" width="120" />
                 <el-table-column label="买入价" width="120">
                   <template #default="{ row }">

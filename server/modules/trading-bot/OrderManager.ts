@@ -1,5 +1,5 @@
 import type { TradingSymbol, OrderInfo } from '../../../types/trading'
-import { createBuyOrder, createSellOrder, fetchOrderStatus, cancelOrder, fetchCurrentPrice } from '../../utils/binance'
+import { createBuyOrder, createSellOrder, createMarketSellOrder, fetchOrderStatus, cancelOrder, fetchCurrentPrice } from '../../utils/binance'
 
 /**
  * 订单管理器 - 负责订单操作的封装
@@ -49,6 +49,24 @@ export class OrderManager {
       amount,
       status: 'open',
       createdAt: Date.now(),
+    }
+  }
+  
+  /**
+   * 创建市价卖单
+   */
+  async createMarketSell(symbol: TradingSymbol, amount: number): Promise<OrderInfo> {
+    const order = await createMarketSellOrder(symbol, amount)
+    
+    return {
+      orderId: order.id,
+      symbol,
+      side: 'sell',
+      price: order.average || order.price || 0,
+      amount,
+      status: 'closed', // 市价单立即成交
+      createdAt: Date.now(),
+      filledAt: Date.now(),
     }
   }
   

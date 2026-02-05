@@ -738,24 +738,34 @@ export class StateHandlers {
         }
       }
       
-      await this.orderManager.createSell(tradingStatus.symbol!, tradingStatus.buyOrder!.amount, currentPrice * 0.998)
-      console.log('✅ 止损卖单已提交')
+      // 使用市价卖单而不是限价卖单
+      const sellOrder = await this.orderManager.createMarketSell(tradingStatus.symbol!, tradingStatus.buyOrder!.amount)
+      console.log('✅ 市价止损卖单已提交')
       
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      // 市价单立即成交，不需要等待
+      const actualSellPrice = sellOrder.price || currentPrice * 0.998
       
       const profitResult = calculateProfit(
         tradingStatus.buyOrder!.amount,
         tradingStatus.buyOrder!.price,
-        currentPrice * 0.998
+        actualSellPrice
       )
       
       console.log(`📊 止损完成，亏损: ${profitResult.profit.toFixed(2)} USDT (${profitResult.profitRate.toFixed(2)}%)`)
       
-      this.updateTradeComplete(tradeRecords, tradingStatus.currentTradeId, profitResult, currentPrice * 0.998, stats, 'STOP_LOSS_MARKET_ORDER')
+      this.updateTradeComplete(tradeRecords, tradingStatus.currentTradeId, profitResult, actualSellPrice, stats, sellOrder.orderId)
       
       return { state: 'DONE', lastUpdateTime: Date.now() }
     } catch (error) {
       console.error('❌ 止损执行失败:', error)
+      // 提供更详细的错误信息
+      if (error instanceof Error && error.name === 'InsufficientFunds') {
+        console.error('💸 资金不足错误详情:')
+        console.error('   - 可能原因: 持仓资产不足或USDT余额不足')
+        console.error('   - 建议: 检查账户余额和持仓状态')
+        console.error('   - 当前交易对:', tradingStatus.symbol)
+        console.error('   - 需要卖出数量:', tradingStatus.buyOrder!.amount)
+      }
       return tradingStatus
     }
   }
