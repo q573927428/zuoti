@@ -71,14 +71,16 @@
     }
   },
   "stats": {
-    "totalTrades": 40,
+    "totalTrades": 41,
     "successfulTrades": 34,
     "failedTrades": 3,
     "totalProfit": -33.18,
     "totalProfitRate": -0.9758823529411764,
     "annualizedReturn": -27.399773755656106,
     "currentDate": "2026-02-06",
-    "tradedSymbols": {}
+    "tradedSymbols": {
+      "BNB/USDT": 1
+    }
   },
-  "lastSaved": 1770307212167
+  "lastSaved": 1770315457816
 }

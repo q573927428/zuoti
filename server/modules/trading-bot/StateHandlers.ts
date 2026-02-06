@@ -728,6 +728,8 @@ export class StateHandlers {
       // 如果存在现有卖单，先取消它以释放余额
       if (tradingStatus.sellOrder && tradingStatus.state === 'SELL_ORDER_PLACED') {
         try {
+          console.log('⚠️  取消现有卖单...');
+          
           console.log('🔄 检测到现有卖单，先取消以释放余额...')
           await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.sellOrder.orderId)
           console.log('✅ 现有卖单已取消')

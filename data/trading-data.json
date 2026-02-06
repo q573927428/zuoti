@@ -1,7 +1,21 @@
 {
   "tradingStatus": {
-    "state": "IDLE",
-    "lastUpdateTime": 1770307212166
+    "state": "BOUGHT",
+    "symbol": "BNB/USDT",
+    "currentTradeId": "trade_1770311986208",
+    "buyOrder": {
+      "orderId": "11004247865",
+      "symbol": "BNB/USDT",
+      "side": "buy",
+      "price": 652.03,
+      "amount": 0.153,
+      "status": "closed",
+      "createdAt": 1770311986208,
+      "filledAt": 1770315457815
+    },
+    "high": 700.37,
+    "low": 646.66,
+    "lastUpdateTime": 1770311986209
   },
   "tradeRecords": [
     {
@@ -501,7 +515,16 @@
       "status": "failed",
       "failureReason": "日切强平失败",
       "endTime": 1770307212166
+    },
+    {
+      "id": "trade_1770311986208",
+      "symbol": "BNB/USDT",
+      "buyOrderId": "11004247865",
+      "buyPrice": 652.03,
+      "amount": 0.153,
+      "startTime": 1770311986208,
+      "status": "in_progress"
     }
   ],
-  "lastSaved": 1770307212167
+  "lastSaved": 1770315457816
 }
