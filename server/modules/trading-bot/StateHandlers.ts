@@ -4,6 +4,7 @@ import { getCurrentDate, getDateFromTimestamp } from '../../utils/date'
 import { findBestTradingSymbol, findBestTradingSymbolMultiTimeframe, calculateBuyAmount, calculateProfit, checkProtection, checkOrderTimeout } from '../../utils/strategy'
 import { fetchBalance, getBinanceInstance } from '../../utils/binance'
 import { getAIAnalysisService } from '../../utils/ai-analysis'
+import { log } from 'console'
 
 /**
  * 状态处理器 - 负责各个交易状态的处理逻辑
@@ -728,8 +729,7 @@ export class StateHandlers {
       // 如果存在现有卖单，先取消它以释放余额
       if (tradingStatus.sellOrder && tradingStatus.state === 'SELL_ORDER_PLACED') {
         try {
-          console.log('⚠️  取消现有卖单...');
-          
+        
           console.log('🔄 检测到现有卖单，先取消以释放余额...')
           await this.orderManager.cancel(tradingStatus.symbol!, tradingStatus.sellOrder.orderId)
           console.log('✅ 现有卖单已取消')
